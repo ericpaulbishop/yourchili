@@ -12,7 +12,7 @@ PROJ_PW="password"
 
 
 upgrade_system
-better_bash_prompt
+better_bash_prompt 1
 set_hostname "$HOSTNAME"
 
 
