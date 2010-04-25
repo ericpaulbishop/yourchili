@@ -785,6 +785,7 @@ http
 	server_names_hash_bucket_size    4096;
 
 	passenger_root                   $passenger_root;
+	passenger_ruby                   $RUBY_PREFIX/bin/ruby;
 	passenger_max_pool_size          1;
 	passenger_pool_idle_time         1;
 	passenger_max_instances_per_app  1;
