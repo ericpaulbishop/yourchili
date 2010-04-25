@@ -118,22 +118,63 @@ __has_parent_dir()
 	done
 	return 1;
 }
+
+__git_branch()
+{
+        local g="$(git rev-parse --git-dir 2>/dev/null)"
+        if [ -n "$g" ]; then
+                local r
+                local b
+                if [ -d "$g/../.dotest" ]
+                then
+                        r="|AM/REBASE"
+                        b="$(git symbolic-ref HEAD 2>/dev/null)"
+                elif [ -f "$g/.dotest-merge/interactive" ]
+                then
+                        r="|REBASE-i"
+                        b="$(cat $g/.dotest-merge/head-name)"
+                elif [ -d "$g/.dotest-merge" ]
+                then
+                        r="|REBASE-m"
+                        b="$(cat $g/.dotest-merge/head-name)"
+                elif [ -f "$g/MERGE_HEAD" ]
+                then
+                        r="|MERGING"
+                        b="$(git symbolic-ref HEAD 2>/dev/null)"
+                else
+                        if [ -f $g/BISECT_LOG ]
+                        then
+                                r="|BISECTING"
+                        fi
+                        if ! b="$(git symbolic-ref HEAD 2>/dev/null)"
+                        then
+                                b="$(cut -c1-7 $g/HEAD)..."
+                        fi
+                fi
+                if [ -n "$1" ]; then
+                        printf "$1" "${b##refs/heads/}$r"
+                else
+                        printf "%s" "${b##refs/heads/}$r"
+                fi
+        fi
+}
+
 __vcs_prompt_part()
 {
 	name=""
 	if [ -d .svn ] ; then 
- 		name="svn" ; 
+		name="svn" ; 
 	elif [ -d RCS ] ; then 
 		echo "RCS" ; 
 	elif __has_parent_dir ".git" ; then
-		local git_branch=$(git symbolic-ref HEAD 2>/dev/null)
+		local git_branch=$(__git_branch)
 		if [ -n "$git_branch" ] ; then
-			name="git $git_branch" ;
+			name="git, $git_branch" ;
 		fi	
 	elif __has_parent_dir ".hg" ; then
 		local hg_branch=$(hg branch 2>/dev/null)
 		if [ -n "$hg_branch" ] ; then
-			name="hg $hg_branch"
+			name="hg, $hg_branch"
 		fi
 	else
 		name=""
@@ -144,7 +185,6 @@ __vcs_prompt_part()
 		echo ""
 	fi
 }
-
 
 
 
@@ -520,6 +560,10 @@ function nginx_php-fpm
 	rm -rf /tmp/phpcrap
 
 }
+
+######################
+# Ruby / Rails       #
+######################
 
 function nginx_ruby
 {
