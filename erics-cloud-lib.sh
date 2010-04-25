@@ -81,6 +81,15 @@ better_bash_prompt()
 		if [ -z "$already_added" ] ; then
 			cat <<'EOF' >>$bashfile
 
+
+# git is a bitch -- it pipes the output of git diff into less
+# unless PAGER variable is set to cat.  Shouldn't cat be
+# the default??? WHAT. THE. HELL.
+PAGER=cat
+export PAGER
+
+
+
 color_red='\[\033[01;31m\]'
 color_orange='\[\033[00;33m\]'
 color_green='\[\033[00;32m\]'
