@@ -31,9 +31,9 @@ export LOGRO_ROTA="12"
 
 function add_user
 {
-	USER="$1"
-	PASS="$2"
-	ADMIN="$3"
+	local USER="$1"
+	local PASS="$2"
+	local ADMIN="$3"
 
 
 	if [ "$ADMIN" = "1" ] ; then
@@ -56,7 +56,7 @@ function add_user
 
 function setup_backup_cronjob
 {
-	curr_dir=$(pwd)
+	local curr_dir=$(pwd)
 	cat /etc/crontab | grep -v "&&.*do_backup.sh" > /etc/crontab.tmp
 	echo '3  23	* * *   root	cd '$curr_dir' && ./do_backup.sh' >>/etc/crontab.tmp
 	mv /etc/crontab.tmp /etc/crontab
@@ -73,8 +73,7 @@ function setup_backup_cronjob
 
 better_bash_prompt()
 {
-	USE_DETAILED=$1
-
+	local USE_DETAILED=$1
 
 	for bashfile in /root/.bashrc /etc/skel/.bashrc ; do
 		already_added=$(cat $bashfile | egrep "^root.*egrep")
@@ -366,10 +365,10 @@ function backup_mysql
 		echo "backup_mysql() requires the output file path as its third argument"
 		return 1;
 	fi
-	USER="$1"
-	PASS="$2"
-	BACKUP_DIR="$3"
-	DBNAMES="$4"
+	local USER="$1"
+	local PASS="$2"
+	local BACKUP_DIR="$3"
+	local DBNAMES="$4"
 
 
 	fname=""
@@ -385,7 +384,7 @@ function backup_mysql
 
 	mkdir -p "$BACKUP_DIR"
 
-	curdir=$(pwd)
+	local curdir=$(pwd)
 	cd /tmp
 	rm -rf "$BACKUP_DIR/$fname-db.tar.bz2"
 	tar cjf	"$BACKUP_DIR/$fname-db.tar.bz2" "$fname-db.sql"
@@ -410,9 +409,9 @@ function restore_mysql
 		return 1;
 	fi
 	
-	USER="$1"
-	DB_PASSWORD="$2"
-	BACKUP_DIR="$3"
+	local USER="$1"
+	local DB_PASSWORD="$2"
+	local BACKUP_DIR="$3"
 
 
 
@@ -450,8 +449,20 @@ function restore_mysql
 #################################
 
 
-function nginx_php-fpm
+function install_php_fpm
 {
+	if [ ! -n "$1" ]; then
+		echo "install_php_fpm requires server user as its first argument"
+		return 1;
+	fi
+	if [ ! -n "$2" ]; then
+		echo "install_php_fpm requires server group as its second argument"
+		return 1;
+	fi
+
+	local PHP_FPM_USER="$1"
+	local PHP_FPM_GROUP="$2"
+
 	#check for versions of: libevent; php-fpm; php; suhosin; suhosin patch.
 	#the naming conventions php-fpm have changed at random in the past. be careful.
 	#
@@ -462,7 +473,7 @@ function nginx_php-fpm
 	#
 	#and alter variables as necessary
 
-	curdir=$(pwd)
+	local curdir=$(pwd)
 	
 	#dependencies for all the crap to be included with php
 	aptitude install -y libcurl4-openssl-dev libjpeg62-dev libpng12-dev libxpm-dev libfreetype6-dev libt1-dev libmcrypt-dev libxslt1-dev libbz2-dev libxml2-dev
@@ -510,7 +521,7 @@ function nginx_php-fpm
 	cd "php-fpm-$PHP_FPM_VER-$PHP_VER_IND"
 	mkdir fpm-build
 	cd fpm-build
-	../configure --srcdir=../ --with-php-src="../../../" --with-php-build="../../" --with-libevent="$LIBEVENT_SEARCH_PATH" --with-fpm-bin=/usr/local/sbin/php-fpm  --with-fpm-init=/etc/init.d/php-fpm --with-fpm-user="$NGINX_USER" --with-fpm-group="$NGINX_GROUP"
+	../configure --srcdir=../ --with-php-src="../../../" --with-php-build="../../" --with-libevent="$LIBEVENT_SEARCH_PATH" --with-fpm-bin=/usr/local/sbin/php-fpm  --with-fpm-init=/etc/init.d/php-fpm --with-fpm-user="$PHP_FPM_USER" --with-fpm-group="$PHP_FPM_GROUP"
 	make
 
 	#install php
@@ -574,9 +585,9 @@ function nginx_php-fpm
 # Ruby / Rails       #
 ######################
 
-function nginx_ruby
+function install_ruby
 {
-	curdir=$(pwd)
+	local curdir=$(pwd)
 	
 	ruby_ee_source_url=$(echo $(wget -O-  http://www.rubyenterpriseedition.com/download.html 2>/dev/null ) | egrep -o 'href="[^\"]*\.tar\.gz' | sed 's/^href="//g')
 	mkdir /tmp/ruby
@@ -606,11 +617,11 @@ function nginx_ruby
 
 function nginx_create_site
 {
-	server_id="$1"
-	server_name_list="$2"
-	is_ssl="$3"
-	rails_paths="$4"
-	enable_php="$5"
+	local server_id="$1"
+	local server_name_list="$2"
+	local is_ssl="$3"
+	local rails_paths="$4"
+	local enable_php="$5"
 
 	port="80"
 	ssl_cert=""
@@ -694,7 +705,7 @@ EOF
 }
 function nginx_ensite
 {
-	server_id="$1"
+	local server_id="$1"
 	ln -s "$NGINX_CONF_PATH/sites-available/$server_id" "$NGINX_CONF_PATH/sites-enabled/$server_id" 
 	/etc/init.d/nginx restart
 }
@@ -705,16 +716,46 @@ function nginx_dissite
 }
 function nginx_delete_site
 {
-	server_id="$1"
+	local server_id="$1"
 	rm -rf "$NGINX_CONF_PATH/sites-enabled/$server_id"
 	rm -rf "$NGINX_CONF_PATH/sites-available/$server_id"
 	rm -rf "$NGINX_PREFIX/$server_id"
 	/etc/init.d/nginx restart
 }
 
-function nginx_install
+function install_nginx
 {
-	curdir=$(pwd)
+	if [ ! -n "$1" ]; then
+		echo "install_nginx requires server user as its first argument"
+		return 1;
+	fi
+	if [ ! -n "$2" ]; then
+		echo "install_nginx requires server group as its second argument"
+		return 1;
+	fi
+
+	local NGINX_USER="$1"
+	local NGINX_GROUP="$2"
+	local NGINX_USE_PHP="$3"
+	local NGINX_USE_PASSENGER="$4"
+
+	if [ -z "$NGINX_USE_PHP" ] ; then
+		NGINX_USE_PHP=1
+	fi
+	if [ -z "$NGINX_USE_PASSENGER" ] ; then
+		NGINX_USE_PASSENGER=1
+	fi
+
+	if [ "$NGINX_USE_PHP" = 1 ] ; then
+		install_php_fpm "$NGINX_USER" "$NGINX_GROUP"
+	fi
+	if [ "$NGINX_USE_PASSENGER" = 1 ] ; then
+		install_ruby
+	fi
+
+
+
+	local curdir=$(pwd)
 
 	#theres a couple dependencies.
 	aptitude install -y libpcre3-dev libcurl4-openssl-dev libssl-dev
@@ -741,12 +782,22 @@ function nginx_install
 	#maek eet
 	cd "nginx-$NGINX_VER"
 
-	#adjust as you please
-	passenger_root=`$RUBY_PREFIX/bin/passenger-config --root`
-	passenger_path="$passenger_root/ext/nginx"
 	nginx_conf_file="$NGINX_CONF_PATH/nginx.conf"
 	nginx_http_log_file="$NGINX_HTTP_LOG_PATH/access.log"
-	./configure --prefix="$NGINX_PREFIX" --sbin-path="$NGINX_SBIN_PATH" --conf-path="$nginx_conf_file" --pid-path="$NGINX_PID_PATH" --error-log-path="$NGINX_ERROR_LOG_PATH" --http-log-path="$nginx_http_log_file" --user="$NGINX_USER" --group="$NGINX_GROUP" --with-http_ssl_module --with-debug --add-module="$passenger_path"
+
+	passenger_root=""
+	passenger_path=""
+	if  [ "$NGINX_USE_PASSENGER" = 1 ] ; then
+		passenger_root=`$RUBY_PREFIX/bin/passenger-config --root`
+		passenger_path="$passenger_root/ext/nginx"
+
+
+		./configure --prefix="$NGINX_PREFIX" --sbin-path="$NGINX_SBIN_PATH" --conf-path="$nginx_conf_file" --pid-path="$NGINX_PID_PATH" --error-log-path="$NGINX_ERROR_LOG_PATH" --http-log-path="$nginx_http_log_file" --user="$NGINX_USER" --group="$NGINX_GROUP" --with-http_ssl_module --with-debug --add-module="$passenger_path"
+	else
+		./configure --prefix="$NGINX_PREFIX" --sbin-path="$NGINX_SBIN_PATH" --conf-path="$nginx_conf_file" --pid-path="$NGINX_PID_PATH" --error-log-path="$NGINX_ERROR_LOG_PATH" --http-log-path="$nginx_http_log_file" --user="$NGINX_USER" --group="$NGINX_GROUP" --with-http_ssl_module --with-debug
+
+	fi
+
 	make
 	make install
 
@@ -764,6 +815,11 @@ function nginx_install
 	sed -i "s/52/$LOGRO_ROTA/" nginx-*/debian/nginx.logrotate
 	cp nginx*/debian/nginx.logrotate /etc/logrotate.d/nginx
 
+
+	pass_comment=""
+	if [  "$NGINX_USE_PASSENGER" != 1 ] ; then
+		pass_comment="#"
+	fi
 
 
 	#setup default nginx config files
@@ -784,8 +840,8 @@ http
 	server_names_hash_max_size       4096;
 	server_names_hash_bucket_size    4096;
 
-	passenger_root                   $passenger_root;
-	passenger_ruby                   $RUBY_PREFIX/bin/ruby;
+	$pass_comment passenger_root                  $passenger_root;
+	$pass_comment passenger_ruby                  $RUBY_PREFIX/bin/ruby;
 	passenger_max_pool_size          1;
 	passenger_pool_idle_time         1;
 	passenger_max_instances_per_app  1;
@@ -806,7 +862,7 @@ EOF
 	mkdir -p "$NGINX_CONF_PATH/sites-available"
 
 	#create default site & start nginx
-	nginx_create_site "default" "default" "0" "" "1"
+	nginx_create_site "default" "default" "0" "" "$NGINX_USE_PHP"
 	nginx_ensite      "default"
 	
 
@@ -829,8 +885,8 @@ function apache_install {
 		echo "First argument of apache_install must be default apache port"
 		return 1
 	fi
-	PORT=$1
-	SSL_PORT=443
+	local PORT=$1
+	local SSL_PORT=443
 
 	if [ -n "$2" ] ; then
 		SSL_PORT=$2
@@ -855,13 +911,11 @@ EOF
 }
 
 function apache_tune {
-	# Tunes Apache's memory to use the percentage of RAM you specify, defaulting to 40%
-
+	# Tunes Apache's memory to use the percentage of RAM you specify, defaulting to 10%
 	# $1 - the percent of system memory to allocate towards Apache
 
-	if [ ! -n "$1" ]; then 
-		PERCENT=10
-	else 
+	local PERCENT=10
+	if [ -n "$1" ]; then 
 		PERCENT="$1"
 	fi
 
@@ -901,12 +955,12 @@ function install_svn_deps
 function setup_svn_with_apache
 {
 	#arguments
-	PROJECT_ID="$1"
-	ANONYMOUS_CHECKOUT="$2"
-	ADMIN_USER="$3"
-	ADMIN_PASSWORD="$4"
+	local PROJECT_ID="$1"
+	local ANONYMOUS_CHECKOUT="$2"
+	local ADMIN_USER="$3"
+	local ADMIN_PASSWORD="$4"
 
-	curdir=$(pwd)
+	local curdir=$(pwd)
 	
 	install_svn_deps
 
@@ -925,7 +979,7 @@ function setup_svn_with_apache
 	fi
 
 
-#create SSL virtual host
+	#create SSL virtual host
 	mkdir -p /srv/www/apache_ssl/public_html /srv/www/apache_ssl/logs
 	mkdir -p /srv/www/apache_nossl/public_html /srv/www/apache_nossl/logs
 	
@@ -1033,7 +1087,7 @@ function setup_svn_with_redmine
 	
 	setup_svn_with_apache "$PROJ_NAME" "$ANONYMOUS_CHECKOUT" "$PROJ_USER" "$PROJ_PW"
 
-	curdir=$(pwd)
+	local curdir=$(pwd)
 
 
 	db="$PROJ_NAME"_rm
@@ -1565,7 +1619,7 @@ function backup_sites
 	fi
 	BACKUP_DIR="$1";
 	
-	curdir=$(pwd)
+	local curdir=$(pwd)
 
 	mkdir -p "$BACKUP_DIR/sites"
 	mkdir -p "$BACKUP_DIR/nginx_site_configs"
@@ -1622,7 +1676,7 @@ function restore_sites
 	fi
 	BACKUP_DIR="$1";
 	
-	curdir=$(pwd)
+	local curdir=$(pwd)
 
 	if [ -d "/etc/nginx/" ]  && [ -d "$BACKUP_DIR/nginx_configs" ] ; then
 		cp -r "$BACKUP_DIR"/nginx_configs/* /etc/nginx/
@@ -1693,9 +1747,9 @@ function backup_projects
 		echo "backup_projects() requires the backup directory as its first argument"
 		return 1;
 	fi
-	BACKUP_DIR="$1"
+	local BACKUP_DIR="$1"
 
-	curdir=$(pwd)
+	local curdir=$(pwd)
 	rm -rf   /tmp/projects
 	mkdir -p /tmp/projects
 	cd       /tmp/projects
@@ -1723,9 +1777,9 @@ function restore_projects
 		echo "restore_projects() requires the backup directory as its first argument"
 		return 1;
 	fi
-	BACKUP_DIR="$1"
+	local BACKUP_DIR="$1"
 
-	curdir=$(pwd)
+	local curdir=$(pwd)
 	
 	if [ -e "$BACKUP_DIR/projects.tar.bz2" ] ; then
 		mkdir -p /srv/
@@ -1745,9 +1799,9 @@ function restore_projects
 
 function initialize_mail_server
 {
-	TEST_USER_DOMAIN="$1"
-	TEST_USER_PASS="$2"
-	PORT_587_ENABLED="$3"
+	local TEST_USER_DOMAIN="$1"
+	local TEST_USER_PASS="$2"
+	local PORT_587_ENABLED="$3"
 
 	upgrade_system
 
@@ -1789,7 +1843,7 @@ function initialize_mail_server
 	
 	
 	#configure tls
-	curdir=$(pwd)
+	local curdir=$(pwd)
 	rm -rf /etc/postfix/ssl /tmp/tmp_cert
 	mkdir -p /etc/postfix/ssl
 	mkdir -p /tmp/tmp_cert
@@ -1996,14 +2050,14 @@ function backup_mail_config
 		echo "backup_mail_config() requires the backup directory as its first argument"
 		return 1;
 	fi
-	BACKUP_DIR="$1"
+	local BACKUP_DIR="$1"
 
 	rm -rf	 /tmp/mail_backup
 	mkdir -p /tmp/mail_backup
 	cp -rp /etc/postfix /tmp/mail_backup/
 	cp -rp /etc/dovecot /tmp/mail_backup/
 	cp -rp /home/vmail  /tmp/mail_backup/
-	curdir=$(pwd)	
+	local curdir=$(pwd)	
 	cd /tmp
 	tar cjfp "$BACKUP_DIR/mail_backup.tar.bz2" mail_backup
 	cd "$curdir"
@@ -2016,7 +2070,7 @@ function restore_mail_config
 		echo "restore_mail_config() requires the backup directory as its first argument"
 		return 1;
 	fi
-	BACKUP_DIR="$1"
+	local BACKUP_DIR="$1"
 
 	if [ ! -e /home/vmail ] ; then
 		initialize_mail_server "dummy.com" "dummy_pass" "0" "1"
@@ -2051,13 +2105,13 @@ function set_hostname
 		return 1;
 	fi
 
-	HOSTNAME="$1"
-	echo "$HOSTNAME" > /etc/hostname
-	echo "$HOSTNAME" > /proc/sys/kernel/hostname
+	local HNAME="$1"
+	echo "$HNAME" > /etc/hostname
+	echo "$HNAME" > /proc/sys/kernel/hostname
 	
 	touch /etc/hosts
-	cat /etc/hosts | grep -v "$HOSTNAME" > /etc/hosts.tmp
-	echo -e "\n127.0.0.1 $HOSTNAME\n" >> /etc/hosts.tmp
+	cat /etc/hosts | grep -v "$HNAME" > /etc/hosts.tmp
+	echo -e "\n127.0.0.1 $HNAME\n" >> /etc/hosts.tmp
 	mv /etc/hosts.tmp /etc/hosts
 
 }
@@ -2069,7 +2123,7 @@ function backup_hostname
 		return 1;
 	fi
 	
-	BACKUP_DIR="$1"
+	local BACKUP_DIR="$1"
 
 	if [ -e /etc/hostname ] ; then
 		cp /etc/hostname "$BACKUP_DIR/"
@@ -2089,7 +2143,7 @@ function restore_hostname
 		return 1;
 	fi
 	
-	BACKUP_DIR="$1"
+	local BACKUP_DIR="$1"
 
 	if [ -e "$BACKUP_DIR/hostname" ] ; then
 		cp "$BACKUP_DIR/hostname" /etc/hostname 

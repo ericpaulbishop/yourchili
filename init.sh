@@ -19,9 +19,7 @@ set_hostname "$HOSTNAME"
 mysql_install "$DB_PASSWORD"
 mysql_tune
 
-nginx_php-fpm
-nginx_ruby
-nginx_install
+nginx_install "$NGINX_USER" "$NGINX_GROUP "1" "1"
 
 setup_svn_with_redmine "$PROJ_NAME" "1" "admin" "$PROJ_PW" "$DB_PASSWORD"
 
