@@ -21,7 +21,11 @@ export NGINX_HTTP_LOG_PATH="/srv/www/nginx_logs"
 export LOGRO_FREQ="monthly"
 export LOGRO_ROTA="12"
 
+export APACHE_HTTP_PORT=8080
+export APACHE_HTTPS_PORT=8443
 
+
+export NGINX_SSL_ID="nginx_ssl"
 
 ###########################################################
 # misc. functions
@@ -658,7 +662,7 @@ EOF
 	if [ -z "$rails_paths" ] ; then
 		cat << EOF >>"$config_path"
 	#passenger_enabled   on;
-	#passenger_base_uri  rails_app; ##should be symlink to public dir of actual rails_app location
+	#passenger_base_uri  rails_app; ##should be symlink to public dir of actual rails_app 
 EOF
 	else
 		echo '	passenger_enabled   on;' >>"$config_path"
@@ -669,17 +673,19 @@ EOF
 		fi	
 	fi
 
-	if [ "$php_enabled" != '0' ] ; then
-		cat << EOF >>"$config_path"
-
-	#php
-	location ~ \.php\$
-	{
-		fastcgi_pass   unix:/var/run/php-fpm.sock ;
-		include        $NGINX_CONF_PATH/fastcgi_params;
-	}
-EOF
+	local php_comment=""
+	if [ "$php_enabled" == '0' ] ; then
+		php_comment="#"
 	fi
+	cat << EOF >>"$config_path"
+
+	${php_comment}#php
+	${php_comment}location ~ \.php\$
+	${php_comment}{
+	${php_comment}	fastcgi_pass   unix:/var/run/php-fpm.sock ;
+	${php_comment}	include        $NGINX_CONF_PATH/fastcgi_params;
+	${php_comment}}
+EOF
 
 	echo "}" >> "$config_path"
 	
@@ -840,13 +846,19 @@ http
 	server_names_hash_max_size       4096;
 	server_names_hash_bucket_size    4096;
 
-	$pass_comment passenger_root                  $passenger_root;
-	$pass_comment passenger_ruby                  $RUBY_PREFIX/bin/ruby;
-	passenger_max_pool_size          1;
-	passenger_pool_idle_time         1;
-	passenger_max_instances_per_app  1;
+	${pass_comment}passenger_root                   $passenger_root;
+	${pass_comment}passenger_ruby                   $RUBY_PREFIX/bin/ruby;
+	${pass_comment}passenger_max_pool_size          1;
+	${pass_comment}passenger_pool_idle_time         1;
+	${pass_comment}passenger_max_instances_per_app  1;
 		
-	
+
+	#proxy settings (only relevant when nginx used as a proxy)
+	proxy_set_header Host \$host;
+	proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+	proxy_set_header X-Real-IP \$remote_addr;
+
+
 	keepalive_timeout   65;
 	sendfile            on;
 
@@ -862,8 +874,11 @@ EOF
 	mkdir -p "$NGINX_CONF_PATH/sites-available"
 
 	#create default site & start nginx
-	nginx_create_site "default" "default" "0" "" "$NGINX_USE_PHP"
+	nginx_create_site "default" "localhost" "0" "" "$NGINX_USE_PHP"
+	nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "" "$NGINX_USE_PHP"
+
 	nginx_ensite      "default"
+	nginx_ensite      "$NGINX_SSL_ID"
 	
 
 	#delete build directory
@@ -878,7 +893,13 @@ EOF
 
 
 
-#TRAC & SVN via apache
+####################
+# Apache (For SVN) #
+####################
+
+
+
+#SVN requires apache
 function apache_install {
 
 	if [ -z "$1" ] ; then
@@ -892,39 +913,18 @@ function apache_install {
 		SSL_PORT=$2
 	fi
 
-
-	# installs the system default apache2 MPM
-	aptitude -y install apache2
-
-	a2dissite default # disable the interfering default virtualhost
-
-	cat << EOF >/etc/apache2/ports.conf
-
-NameVirtualHost *:$PORT
-Listen          $PORT
-
-<Ifmodule mod_ssl.c>
-	Listen  $SSL_PORT
-</IfModule>
-EOF
-
-}
-
-function apache_tune {
-	# Tunes Apache's memory to use the percentage of RAM you specify, defaulting to 10%
-	# $1 - the percent of system memory to allocate towards Apache
-
-	local PERCENT=10
-	if [ -n "$1" ]; then 
-		PERCENT="$1"
+	local PERCENT_MEM=10
+	if [ -n "$3" ]; then 
+		PERCENT_MEM="$3"
 	fi
 
-	#Install & Configure MPM-prefork
-	aptitude -y install apache2-mpm-prefork
-	PERPROCMEM=32   # the amount of memory in MB each apache process is likely to utilize, assume apache processes will explode in size like they always do
-	MAXREQUESTS=100 # number of sessions served before apache process is refreshed, 0 for unlimited
-	MEM=$(grep MemTotal /proc/meminfo | awk '{ print int($2/1024) }') # how much memory in MB this system has
-	MAXCLIENTS=$(( 1+(MEM*PERCENT/100/PERPROCMEM) )) # calculate MaxClients
+
+	# installs apache2 with prefork MPM
+	aptitude -y install apache2-mpm-prefork ssl-cert 
+	local PERPROCMEM=20   # the amount of memory in MB each apache process is likely to utilize, assume apache processes will explode in size like they always do
+	local MAXREQUESTS=100 # number of sessions served before apache process is refreshed, 0 for unlimited
+	local MEM=$(grep MemTotal /proc/meminfo | awk '{ print int($2/1024) }') # how much memory in MB this system has
+	local MAXCLIENTS=$(( 1+(MEM*PERCENT_MEM/100/PERPROCMEM) )) # calculate MaxClients
 	MAXCLIENTS=${MAXCLIENTS/.*} # cast to an integer
 	sed -i -e "s/\(^[ \t]*StartServers[ \t]*\)[0-9]*/\1$MAXCLIENTS/" /etc/apache2/apache2.conf
 	sed -i -e "s/\(^[ \t]*MinSpareServers[ \t]*\)[0-9]*/\11/" /etc/apache2/apache2.conf
@@ -935,34 +935,7 @@ function apache_tune {
 	#turn off KeepAlive
 	sed -i -e "s/\(^[ \t]*KeepAlive[ \t]*\)On/\1Off/" /etc/apache2/apache2.conf
 	/etc/init.d/apache2 restart >/dev/null 2>&1
-}
 
-function install_svn_deps
-{
-	#install apache
-	apache_install "8080" "443"
-	apache_tune 
-	aptitude -y install ssl-cert wget subversion subversion-tools libapache2-svn libapache-dbi-perl libapache2-mod-perl2 libdbd-mysql-perl libdigest-sha1-perl libapache2-mod-wsgi
-
-	#enable necessary apache modules	
-	a2enmod rewrite
-	a2enmod ssl
-	a2enmod dav_svn
-	a2enmod perl
-}
-
-
-function setup_svn_with_apache
-{
-	#arguments
-	local PROJECT_ID="$1"
-	local ANONYMOUS_CHECKOUT="$2"
-	local ADMIN_USER="$3"
-	local ADMIN_PASSWORD="$4"
-
-	local curdir=$(pwd)
-	
-	install_svn_deps
 
 	#create SSL certificate, if one doesn't already exist in /etc/apache2/ssl/apache.pem
 	mkdir /etc/apache2/ssl
@@ -979,14 +952,34 @@ function setup_svn_with_apache
 	fi
 
 
-	#create SSL virtual host
-	mkdir -p /srv/www/apache_ssl/public_html /srv/www/apache_ssl/logs
-	mkdir -p /srv/www/apache_nossl/public_html /srv/www/apache_nossl/logs
-	
+	a2dissite default # disable the interfering default virtualhost
 
-	cat <<'EOF' >/etc/apache2/sites-available/apache_ssl
-<IfModule mod_ssl.c>
-<VirtualHost _default_:443>
+	cat << EOF >/etc/apache2/ports.conf
+
+NameVirtualHost *:$PORT
+Listen          $PORT
+
+<Ifmodule mod_ssl.c>
+	Listen  $SSL_PORT
+</IfModule>
+EOF
+
+		#create SSL & non-SSL virtual hosts, but don't enable them
+		mkdir -p /srv/www/apache_nossl/public_html /srv/www/apache_nossl/logs
+		mkdir -p /srv/www/apache_ssl/public_html /srv/www/apache_ssl/logs
+		
+		echo "<VirtualHost _default_:$PORT>" >> /etc/apache2/sites-available/apache_nossl
+		cat <<'EOF' >/etc/apache2/sites-available/apache_nossl
+    DocumentRoot             /srv/www/apache_nossl/public_html/
+    ErrorLog                 /srv/www/apache_nossl/logs/error.log
+    CustomLog                /srv/www/apache_nossl/logs/access.log combined
+</VirtualHost>
+EOF
+
+		
+		echo "<IfModule mod_ssl.c>" > /etc/apache2/sites-available/apache_ssl
+		echo "<VirtualHost _default_:$SSL_PORT>" >> /etc/apache2/sites-available/apache_ssl
+		cat <<'EOF' >>/etc/apache2/sites-available/apache_ssl
     DocumentRoot             /srv/www/apache_ssl/public_html/
     ErrorLog                 /srv/www/apache_ssl/logs/error.log
     CustomLog                /srv/www/apache_ssl/logs/access.log combined
@@ -1008,216 +1001,61 @@ function setup_svn_with_apache
 </IfModule>
 EOF
 
+
 	a2ensite apache_ssl
+	a2ensite apache_nossl
 
-	#create trac & svn root directories
-	mkdir -p "/srv/projects/svn"
-	mkdir -p "/srv/projects/auth/$PROJECT_ID"
-	
-	#create svn repository
-	svnadmin create "/srv/projects/svn/$PROJECT_ID"
+	#no sites enabled, so just stop apache for now
+	/etc/init.d/apache2 restart >/dev/null 2>&1
 
-	web_auth_file="/srv/projects/auth/$PROJECT_ID/$PROJECT_ID.htpasswd"
-	svn_auth_file="/srv/projects/auth/$PROJECT_ID/svn_auth_$PROJECT_ID"
-	web_auth_enable="/etc/apache2/sites-available/auth_$PROJECT_ID"
-	
-	htpasswd -bc "$web_auth_file" "$ADMIN_USER" "$ADMIN_PASSWORD"
-	
-	if [ "$ANONYMOUS_CHECKOUT" = "1" ] ; then
-		echo '[/]' >               "$svn_auth_file"
-		echo "$ADMIN_USER = rw" >> "$svn_auth_file"
-		echo '* = r' >>            "$svn_auth_file"
-	
-	else		
-		echo '[/]' >               "$svn_auth_file"
-		echo "$ADMIN_USER = rw" >> "$svn_auth_file"
-	fi
-	
-	echo "<Location /svn/$PROJECT_ID>">>               "$web_auth_enable"
-	echo '    DAV svn'>>                               "$web_auth_enable"
-	echo "    SVNPath /srv/projects/svn/$PROJECT_ID">> "$web_auth_enable"
-	
-	if [ "$FORCE_SSL_FOR_SVN" = "1" ] ; then
-		echo '    RewriteEngine on'>>                                    "$web_auth_enable"
-		echo '    RewriteCond %{HTTPS} off'>>                            "$web_auth_enable"
-		echo '    RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI}'>> "$web_auth_enable"
-	fi
-	echo '    AuthType Basic'>>                          "$web_auth_enable"
-	echo "    AuthName \"$PROJECT_ID SVN Repository\"">> "$web_auth_enable"
-	echo "    AuthUserFile $web_auth_file">>             "$web_auth_enable"
-	echo "    AuthzSVNAccessFile $svn_auth_file">>       "$web_auth_enable"
-	echo '    Satisfy any'>>                             "$web_auth_enable"
-	echo '    Require valid-user'>>                      "$web_auth_enable"
-	echo '</Location>'>>                                 "$web_auth_enable"
-	a2ensite "auth_$PROJECT_ID"
 
-	#grant permissions to apache for necessary directories
-	chown -R www-data "/srv/projects/"
-	
-
-	#initialize SVN structure
-	cd /tmp
-	svn checkout  "file:///srv/projects/svn/$PROJECT_ID/"
-	cd "$PROJECT_ID"
-	mkdir branches tags trunk
-	svn add branches tags trunk
-	svn commit -m "Create Initial Repository Structure"
-	cd ..
-	rm -rf "$PROJECT_ID"
-
-	#restart apache
-	/etc/init.d/apache2 restart
-
-	cd "$curdir"
-
-	return 0
 }
 
 
+#################
+# Subversion    #
+#################
 
 
-function setup_svn_with_redmine
+#note this requires apache, which we're going to reverse proxy with nginx
+function install_svn
 {
-	#arguments
-	PROJ_NAME="$1"
-	ANONYMOUS_CHECKOUT="$2"
-	PROJ_USER="$3"
-	PROJ_PW="$4"
-	DB_PASSWORD="$5"
-	
-	setup_svn_with_apache "$PROJ_NAME" "$ANONYMOUS_CHECKOUT" "$PROJ_USER" "$PROJ_PW"
+	#only install if svn isn't initialized
+	if [ ! -d "/srv/projects/svn" ] ; then
 
-	local curdir=$(pwd)
+		#install apache
+		apache_install "$APACHE_HTTP_PORT" "$APACHE_HTTPS_PORT" #should be firewalled -- we're just going to serve SVN through these ports to NGINX
+		apache_tune 
+		aptitude -y install wget subversion subversion-tools libapache2-svn libapache-dbi-perl libapache2-mod-perl2 libdbd-mysql-perl libdigest-sha1-perl libapache2-mod-wsgi
 
-
-	db="$PROJ_NAME"_rm
-	mysql_create_database "$DB_PASSWORD" "$db"
-	mysql_create_user     "$DB_PASSWORD" "$db" "$PROJ_PW"
-	mysql_grant_user      "$DB_PASSWORD" "$db" "$db"
-
-	mkdir -p /srv/projects/redmine
-	cd /srv/projects/redmine
-	svn checkout http://redmine.rubyforge.org/svn/branches/0.9-stable "$PROJ_NAME"
-	cd "$PROJ_NAME"
-
-	cat << EOF >config/database.yml
-production:
-  adapter: mysql
-  database: $db
-  host: localhost
-  username: $db
-  password: $PROJ_PW
-EOF
-
-	if [ -e config/initializers/session_store.rb ] ; then
-		RAILS_ENV=production rake config/initializers/session_store.rb
-	else
-		rake generate_session_store
-	fi
-	RAILS_ENV=production rake db:migrate
-	echo "en" | RAILS_ENV=production rake redmine:load_default_data
-	mkdir tmp public/plugin_assets
-	sudo chmod -R 755 files log tmp public/plugin_assets
-
-	#initialize redmine project data with create.rb script
-	cat << EOF >create.rb
-# Adapted From: http://github.com/edavis10/redmine_data_generator/blob/37b8acb63a4302281641090949fb0cb87e8b1039/app/models/data_generator.rb#L36
-project = Project.create(
-					:name => "$PROJ_NAME",
-					:description => "",
-					:identifier => "$PROJ_NAME",
-					:is_public =>$ANONYMOUS_CHECKOUT
-					)
-
-repo = Repository::Subversion.create(
-					:project_id=>project.id,
-					:url=>"file:///srv/projects/svn/$PROJ_NAME"
-					)
-enmod = EnabledModule.create(
-					:project_id=>project.id,
-					:name=>"repository"
-					)
-
-@user = User.new( 
-					:language => Setting.default_language,
-					:firstname=>"-",
-					:lastname=>"-",
-					:mail=>"none@none.com"
-					)
-@user.admin = true
-@user.login = "$PROJ_USER"
-@user.password = "$PROJ_PW"
-@user.password_confirmation = "$PROJ_PW"
-@user.save
-
-@membership = Member.new(
-			:principal=>@user,
-			:project_id=>project.id,
-			:role_ids=>[3]
-			)
-@membership.save
-
-
-puts project.errors.full_messages
-puts repo.errors.full_messages
-puts enmod.errors.full_messages
-puts @user.errors.full_messages
-puts @membership.errors.full_messages
-
-EOF
-
-	#delete original admin user & update info by running create script
-	echo "DELETE FROM users WHERE login=\"admin\" ; " | mysql -u root -p"$DB_PASSWORD" "$db"
-	ruby script/console production < create.rb
-	rm -rf create.rb
+		#enable necessary apache modules	
+		a2enmod rewrite
+		a2enmod ssl
+		a2enmod dav_svn
+		a2enmod perl
 
 
 
-	chown -R www-data:www-data /srv/projects
+		#create svn root directory
+		mkdir -p "/srv/projects/svn"
 
-	nginx_delete_site "default"
-	nginx_delete_site "localhost"
-	nginx_create_site "localhost" "localhost" "0" "/$PROJ_NAME" "1"
-	cd /srv/www/localhost/public_html
-	ln -s /srv/projects/redmine/$PROJ_NAME/public $PROJ_NAME
-	nginx_ensite      "localhost"
+		#grant permissions to apache for necessary directories
+		chown -R www-data "/srv/projects/"
 
-	#use redmine authentication
-	rm -rf projects/auth/
-	cat << EOF >"/etc/apache2/sites-available/auth_$PROJ_NAME"
-PerlLoadModule Apache::Authn::Redmine
-<Location /svn/$PROJ_NAME>
-	DAV               svn
-	SVNPath           /srv/projects/svn/$PROJ_NAME
-	Order             deny,allow
-	Deny from         all
-	Satisfy           any
-	PerlAccessHandler Apache::Authn::Redmine::access_handler	
-	PerlAuthenHandler Apache::Authn::Redmine::authen_handler
-	AuthType          Basic
-	AuthName	  "$PROJ_NAME SVN Repository"
+		#restart apache
+		/etc/init.d/apache2 restart
 
-EOF
-	if [ "$ANONYMOUS_CHECKOUT" == "1" ] ; then
-	cat << EOF >>"/etc/apache2/sites-available/auth_$PROJ_NAME"
-	<Limit GET PROPFIND OPTIONS>
-		Require     valid-user
-	</Limit>
-
-EOF
 	fi
 
-	cat << EOF >>"/etc/apache2/sites-available/auth_$PROJ_NAME"
-	<LimitExcept GET PROPFIND OPTIONS>
-		Require   valid-user
-	</LimitExcept>
+}
 
-	RedmineDSN        "DBI:mysql:database=$db;host=localhost"
-	RedmineDbUser     "$db"
-	RedmineDbPass     "$PROJ_PW"
+#################
+# Redmine / SVN #
+#################
 
-</Location>
-EOF
+
+function better_redmine_auth_pm
+{
 
 	#default Redmine.pm only works with SVNParentPath, not SVNPath
 	#Dump a better version that fixes this (still works with SVNParentPath too)
@@ -1605,12 +1443,269 @@ sub connect_database {
 EOF
 
 
+}
+
+
+function create_svn_project
+{
+	#arguments
+	local DB_PASSWORD="$1"
+	local PROJ_NAME="$2"
+	local ANONYMOUS_CHECKOUT="$3"
+	local PROJ_USER_ID="$4"
+	local PROJ_PW="$5"
+	local PROJ_USER_FIRST="$6"
+	local PROJ_USER_LAST="$7"
+	local PROJ_USER_EMAIL="$8"
+	
+	local curdir=$(pwd)
+
+	#does nothing if svn is already installed
+	install_svn
+
+	#create svn repository
+	svnadmin create "/srv/projects/svn/$PROJECT_ID"
+
+
+	#initialize SVN structure
+	cd /tmp
+	svn checkout  "file:///srv/projects/svn/$PROJECT_ID/"
+	cd "$PROJECT_ID"
+	mkdir branches tags trunk
+	svn add branches tags trunk
+	svn commit -m "Create Initial Repository Structure"
+
+
+	local curdir=$(pwd)
+
+
+	db="$PROJ_NAME"_rm
+	mysql_create_database "$DB_PASSWORD" "$db"
+	mysql_create_user     "$DB_PASSWORD" "$db" "$PROJ_PW"
+	mysql_grant_user      "$DB_PASSWORD" "$db" "$db"
+
+	mkdir -p /srv/projects/redmine
+	cd /srv/projects/redmine
+	svn checkout http://redmine.rubyforge.org/svn/branches/0.9-stable "$PROJ_NAME"
+	cd "$PROJ_NAME"
+	find . -name ".svn" | xargs rm -rf
+
+	cat << EOF >config/database.yml
+production:
+  adapter: mysql
+  database: $db
+  host: localhost
+  username: $db
+  password: $PROJ_PW
+EOF
+
+	if [ -e config/initializers/session_store.rb ] ; then
+		RAILS_ENV=production rake config/initializers/session_store.rb
+	else
+		rake generate_session_store
+	fi
+	RAILS_ENV=production rake db:migrate
+	echo "en" | RAILS_ENV=production rake redmine:load_default_data
+	mkdir tmp public/plugin_assets
+	sudo chmod -R 755 files log tmp public/plugin_assets
+
+	#initialize redmine project data with create.rb script
+	cat << EOF >create.rb
+# Adapted From: http://github.com/edavis10/redmine_data_generator/blob/37b8acb63a4302281641090949fb0cb87e8b1039/app/models/data_generator.rb#L36
+project = Project.create(
+					:name => "$PROJ_NAME",
+					:description => "",
+					:identifier => "$PROJ_NAME",
+					:is_public =>$ANONYMOUS_CHECKOUT
+					)
+
+repo = Repository::Subversion.create(
+					:project_id=>project.id,
+					:url=>"file:///srv/projects/svn/$PROJ_NAME"
+					)
+enmod = EnabledModule.create(
+					:project_id=>project.id,
+					:name=>"repository"
+					)
+
+@user = User.new( 
+					:language => Setting.default_language,
+					:firstname=>"$PROJ_USER_FIRST",
+					:lastname=>"$PROJ_USER_LAST",
+					:mail=>"$PROJ_USER_EMAIL"
+					)
+@user.admin = true
+@user.login = "$PROJ_USER"
+@user.password = "$PROJ_PW"
+@user.password_confirmation = "$PROJ_PW"
+@user.save
+
+@membership = Member.new(
+			:principal=>@user,
+			:project_id=>project.id,
+			:role_ids=>[3]
+			)
+@membership.save
+
+
+puts project.errors.full_messages
+puts repo.errors.full_messages
+puts enmod.errors.full_messages
+puts @user.errors.full_messages
+puts @membership.errors.full_messages
+
+EOF
+
+	#delete original admin user & update info by running create script
+	echo "DELETE FROM users WHERE login=\"admin\" ; " | mysql -u root -p"$DB_PASSWORD" "$db"
+	ruby script/console production < create.rb
+	rm -rf create.rb
+
+	chown -R www-data:www-data /srv/projects
+
+	#nginx_delete_site "default"
+	#nginx_delete_site "localhost"
+	#nginx_create_site "localhost" "localhost" "0" "/$PROJ_NAME" "1"
+	#cd /srv/www/localhost/public_html
+	#ln -s /srv/projects/redmine/$PROJ_NAME/public $PROJ_NAME
+	#nginx_ensite      "localhost"
+
+
+
+	#use redmine authentication
+	better_redmine_auth_pm
+	cat << EOF >"/etc/apache2/sites-available/auth_$PROJ_NAME"
+PerlLoadModule Apache::Authn::Redmine
+<Location /svn/$PROJ_NAME>
+	DAV               svn
+	SVNPath           /srv/projects/svn/$PROJ_NAME
+	Order             deny,allow
+	Deny from         all
+	Satisfy           any
+	PerlAccessHandler Apache::Authn::Redmine::access_handler	
+	PerlAuthenHandler Apache::Authn::Redmine::authen_handler
+	AuthType          Basic
+	AuthName	  "$PROJ_NAME SVN Repository"
+
+EOF
+	if [ "$ANONYMOUS_CHECKOUT" == "1" ] ; then
+	cat << EOF >>"/etc/apache2/sites-available/auth_$PROJ_NAME"
+	<Limit GET PROPFIND OPTIONS>
+		Require     valid-user
+	</Limit>
+
+EOF
+	fi
+
+	cat << EOF >>"/etc/apache2/sites-available/auth_$PROJ_NAME"
+	<LimitExcept GET PROPFIND OPTIONS>
+		Require   valid-user
+	</LimitExcept>
+
+	RedmineDSN        "DBI:mysql:database=$db;host=localhost"
+	RedmineDbUser     "$db"
+	RedmineDbPass     "$PROJ_PW"
+
+</Location>
+EOF
 	/etc/init.d/apache2 restart
 	
 	cd "$curdir"
 
 }
+
+
+function enable_svn_project_for_vhost
+{
+	local VHOST_ID=$1
+	local PROJ_ID=$2
+	local FORCE_SVN_SSL=$3
+	local FORCE_REDMINE_SSL=$4
 	
+	#enable redmine project in vhost, if not forcing use of ssl vhost
+	if [ "$FORCE_REDMINE_SSL" != "1" ] ; then
+		local vhost_root=$(cat "/etc/nginx/sites-available/$VHOST_ID" | awk ' { print $2 } ' | sed 's/;.*$//g')
+		ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$vhost_root/$PROJ_ID"
+		cat "/etc/nginx/sites-available/$VHOST_ID" | grep -v "passenger_base_uri.*$PROJ_ID;" > "/etc/nginx/sites-available/$VHOST_ID.tmp" 
+		sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;/g" |  > "/etc/nginx/sites-available/$VHOST_ID"
+		rm -rf "/etc/nginx/sites-available/$VHOST_ID.tmp" 
+	fi
+
+	#enable redmine project in ssl vhost
+	if [ -n "/etc/nginx/sites-available/$NGINX_SSL_ID" ] ; then
+		nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "/$PROJID" "1"
+	fi
+	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | awk ' { print $2 } ' | sed 's/;.*$//g')
+	ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$ssl_root/$PROJ_ID"
+	cat "/etc/nginx/sites-available/$NGINX_SSL_ID_ID" | grep -v "passenger_base_uri.*$PROJ_ID;" > "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
+	sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;/g" |  > "/etc/nginx/sites-available/$NGINX_SSL_ID"
+	rm -rf "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
+	
+
+	# setup nossl_include
+	# if svn requires ssl just add rewrite, otherwise pass to apache http port
+	# if redmine requires ssl add rewrite, otherwise nothing
+	if [ "$FORCE_SVN_SSL" = "1" ] ; then
+		cat << EOF >/$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf
+	location ~ ^/svn/.*\$
+	{
+ 		rewrite ^(.*)\$ https://\$host_without_www/\$1 permanent;
+	}
+EOF
+	else
+		cat << EOF >/$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf
+	location ~ ^/svn/.*\$
+	{
+		proxy_set_header   X-Forwarded-Proto http;
+		proxy_pass         http://localhost:$HTTP_PORT;
+	}
+EOF
+	fi
+	if [ "$FORCE_REDMINE_SSL" = "1" ] ; then
+			cat << EOF >>/$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf
+	location ~ ^/$PROJ_ID/.*$
+	{
+ 		rewrite ^(.*)\$ https://\$host_without_www/\$1 permanent;
+	}
+EOF
+	fi
+
+
+	# setup ssl_include
+	# always pass ssl to apache https port
+	cat << EOF >/$NGINX_CONF_PATH/${PROJ_ID}_project_ssl.conf
+	location ~ ^/svn/.*\$
+	{
+		proxy_set_header   X-Forwarded-Proto https;
+		proxy_pass         https://localhost:$HTTPS_PORT;
+	}
+EOF
+
+	#add includes to vhosts
+	cat "/etc/nginx/sites-available/$VHOST_ID" | grep -v "^}" | grep -v "include.*${PROJ_ID}_project_ssl.conf;" >"/etc/nginx/sites-available/$VHOST_ID.tmp" 
+	cat << EOF >>/etc/nginx/sites-available/$VHOST_ID.tmp
+	include $NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf;
+}
+EOF
+	mv "/etc/nginx/sites-available/$VHOST_ID.tmp" "/etc/nginx/sites-available/$VHOST_ID"
+	
+	cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -v "^}" | grep -v "include.*${PROJ_ID}_project_ssl.conf;" >"/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
+	cat << EOF >>/etc/nginx/sites-available/$NGINX_SSL_ID.tmp
+	include $NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf;
+}
+EOF
+	mv "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" "/etc/nginx/sites-available/$NGINX_SSL_ID"
+
+	/etc/init.d/nginx restart
+
+}
+
+
+
+#####################################
+# Site / Project Backup & Restore   #
+#####################################
+
 function backup_sites
 {
 	if [ ! -n "$1" ]; then
