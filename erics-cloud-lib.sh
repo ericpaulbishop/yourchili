@@ -453,7 +453,7 @@ function restore_mysql
 #################################
 
 
-function install_php_fpm
+function php_fpm_install
 {
 	if [ ! -n "$1" ]; then
 		echo "install_php_fpm requires server user as its first argument"
@@ -589,7 +589,7 @@ function install_php_fpm
 # Ruby / Rails       #
 ######################
 
-function install_ruby
+function ruby_install
 {
 	local curdir=$(pwd)
 	
@@ -729,7 +729,7 @@ function nginx_delete_site
 	/etc/init.d/nginx restart
 }
 
-function install_nginx
+function nginx_install 
 {
 	if [ ! -n "$1" ]; then
 		echo "install_nginx requires server user as its first argument"
@@ -753,10 +753,10 @@ function install_nginx
 	fi
 
 	if [ "$NGINX_USE_PHP" = 1 ] ; then
-		install_php_fpm "$NGINX_USER" "$NGINX_GROUP"
+		php_fpm_install "$NGINX_USER" "$NGINX_GROUP"
 	fi
 	if [ "$NGINX_USE_PASSENGER" = 1 ] ; then
-		install_ruby
+		ruby_install
 	fi
 
 
@@ -1464,19 +1464,20 @@ function create_svn_project
 	install_svn
 
 	#create svn repository
-	svnadmin create "/srv/projects/svn/$PROJECT_ID"
+	svnadmin create "/srv/projects/svn/$PROJ_NAME"
 
 
 	#initialize SVN structure
 	cd /tmp
-	svn checkout  "file:///srv/projects/svn/$PROJECT_ID/"
-	cd "$PROJECT_ID"
+	svn checkout  "file:///srv/projects/svn/$PROJ_NAME/"
+	cd "$PROJ_NAME"
 	mkdir branches tags trunk
 	svn add branches tags trunk
 	svn commit -m "Create Initial Repository Structure"
+	cd ..
+	rm -rf "$PROJ_NAME"
 
 
-	local curdir=$(pwd)
 
 
 	db="$PROJ_NAME"_rm
@@ -1608,6 +1609,7 @@ EOF
 
 </Location>
 EOF
+	a2ensite "auth_$PROJ_NAME"
 	/etc/init.d/apache2 restart
 	
 	cd "$curdir"
