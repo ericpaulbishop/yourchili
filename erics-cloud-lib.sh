@@ -1651,7 +1651,7 @@ function enable_svn_project_for_vhost
 		cat << EOF >/$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf
 	location ~ ^/svn/.*\$
 	{
- 		rewrite ^(.*)\$ https://\$host_without_www/\$1 permanent;
+ 		rewrite ^(.*)\$ https://\$host\$1 permanent;
 	}
 EOF
 	else
@@ -1667,7 +1667,7 @@ EOF
 			cat << EOF >>/$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf
 	location ~ ^/$PROJ_ID/.*$
 	{
- 		rewrite ^(.*)\$ https://\$host_without_www/\$1 permanent;
+ 		rewrite ^(.*)\$ https://\$host\$1 permanent;
 	}
 EOF
 	fi
