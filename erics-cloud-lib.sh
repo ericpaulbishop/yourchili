@@ -969,7 +969,7 @@ EOF
 		mkdir -p /srv/www/apache_ssl/public_html /srv/www/apache_ssl/logs
 		
 		echo "<VirtualHost _default_:$PORT>" >> /etc/apache2/sites-available/apache_nossl
-		cat <<'EOF' >/etc/apache2/sites-available/apache_nossl
+		cat <<'EOF' >>/etc/apache2/sites-available/apache_nossl
     DocumentRoot             /srv/www/apache_nossl/public_html/
     ErrorLog                 /srv/www/apache_nossl/logs/error.log
     CustomLog                /srv/www/apache_nossl/logs/access.log combined
@@ -1629,7 +1629,7 @@ function enable_svn_project_for_vhost
 		local vhost_root=$(cat "/etc/nginx/sites-available/$VHOST_ID" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
 		ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$vhost_root/$PROJ_ID"
 		cat "/etc/nginx/sites-available/$VHOST_ID" | grep -v "passenger_base_uri.*$PROJ_ID;" > "/etc/nginx/sites-available/$VHOST_ID.tmp" 
-		cat "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;/g" |  > "/etc/nginx/sites-available/$VHOST_ID"
+		cat "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
 		rm -rf "/etc/nginx/sites-available/$VHOST_ID.tmp" 
 	fi
 
@@ -1640,7 +1640,7 @@ function enable_svn_project_for_vhost
 	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
 	ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$ssl_root/$PROJ_ID"
 	cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -v "passenger_base_uri.*$PROJ_ID;" > "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
-	cat "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;/g" |  > "/etc/nginx/sites-available/$NGINX_SSL_ID"
+	cat "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;/g"  > "/etc/nginx/sites-available/$NGINX_SSL_ID"
 	rm -rf "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
 	
 
@@ -1659,7 +1659,7 @@ EOF
 	location ~ ^/svn/.*\$
 	{
 		proxy_set_header   X-Forwarded-Proto http;
-		proxy_pass         http://localhost:$HTTP_PORT;
+		proxy_pass         http://localhost:$APACHE_HTTP_PORT;
 	}
 EOF
 	fi
@@ -1679,7 +1679,7 @@ EOF
 	location ~ ^/svn/.*\$
 	{
 		proxy_set_header   X-Forwarded-Proto https;
-		proxy_pass         https://localhost:$HTTPS_PORT;
+		proxy_pass         https://localhost:$APACHE_HTTPS_PORT;
 	}
 EOF
 
@@ -1701,7 +1701,7 @@ EOF
 
 	cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -v "^}" | grep -v "include.*${PROJ_ID}_project_ssl.conf;" >"/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
 	cat << EOF >>/etc/nginx/sites-available/$NGINX_SSL_ID.tmp
-	include $NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf;
+	include $NGINX_CONF_PATH/${PROJ_ID}_project_ssl.conf;
 }
 EOF
 	mv "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" "/etc/nginx/sites-available/$NGINX_SSL_ID"
