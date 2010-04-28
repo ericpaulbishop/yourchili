@@ -239,7 +239,7 @@ __vcs_prompt_part()
 		name=""
 	fi
 	if [ -n "$name" ] ; then
-		echo -e '-(\033[01;35m'$name'\033[01;37m)' #purple
+		echo -e '-(\033[01;35m'$name'\033[00m)' #purple
 	else
 		echo ""
 	fi
