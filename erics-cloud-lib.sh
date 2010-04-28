@@ -118,18 +118,6 @@ fi
 
 # Utility function so we can test for things like .git/.hg without firing
 # up a separate process
-__has_parent_dir()
-{
-	test -d "$1" && return 0;
-	current="."
-	while [ !"$current" -ef "$current/.." ] ; do
-		if [ -d "$current/$1" ]; then 
-			return 0 
-		fi
-		current="$current/.."
-	done
-	return 1;
-}
 
 __git_branch()
 {
@@ -170,24 +158,19 @@ __git_branch()
                 fi
         fi
 }
-
 __vcs_prompt_part()
 {
 	name=""
+	local git_branch=$(__git_branch)
+	local hg_branch=$(hg branch 2>/dev/null)
 	if [ -d .svn ] ; then 
 		name="svn" ; 
 	elif [ -d RCS ] ; then 
 		echo "RCS" ; 
-	elif __has_parent_dir ".git" ; then
-		local git_branch=$(__git_branch)
-		if [ -n "$git_branch" ] ; then
-			name="git, $git_branch" ;
-		fi	
-	elif __has_parent_dir ".hg" ; then
-		local hg_branch=$(hg branch 2>/dev/null)
-		if [ -n "$hg_branch" ] ; then
-			name="hg, $hg_branch"
-		fi
+	elif [ -n "$git_branch" ] ; then
+		name="git, $git_branch" ;
+	elif [ -n "$hg_branch" ] ; then
+		name="hg, $hg_branch"
 	else
 		name=""
 	fi
@@ -197,7 +180,6 @@ __vcs_prompt_part()
 		echo ""
 	fi
 }
-
 
 
 detailed='${debian_chroot:+($debian_chroot)}'$color_default'\n('$color_user'\u@\h'$color_default')-('$color_cyan'\d \@'$color_default')$(__vcs_prompt_part)\n'$color_default'('$color_blue'\w'$color_default')\$ '
