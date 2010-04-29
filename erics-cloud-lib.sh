@@ -251,7 +251,7 @@ short='${debian_chroot:+($debian_chroot)}'$color_user'\u@\h'$color_default':'$co
 
 PS1=$short
 
-EOF	
+EOF
 	
 		if [ "$USE_DETAILED" = "1" ] ; then
 			sed -i -e 's/^PS1=\$short[\t ]*$/PS1=$detailed/' $bashfile 
