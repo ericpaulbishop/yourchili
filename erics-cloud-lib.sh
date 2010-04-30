@@ -1763,16 +1763,17 @@ function git_install
 {
 	curdir=$(pwd)
 
-	aptitude install -y tk8.4 libcurl
-
-	rm -rf /tmp/git
-	mkdir -p /tmp/git
-	cd /tmp/git
-	wget http://www.kernel.org/pub/software/scm/git/git-1.7.1.tar.bz2 
-	tar xjf *.tar.bz2
-	cd git-1.7.1
-	./configure
-	make install
+	if [ ! -e /usr/local/libexec/git-core/git ] ; then
+		aptitude install -y tk8.4 libcurl
+		rm -rf /tmp/git
+		mkdir -p /tmp/git
+		cd /tmp/git
+		wget http://www.kernel.org/pub/software/scm/git/git-1.7.1.tar.bz2 
+		tar xjf *.tar.bz2
+		cd git-1.7.1
+		./configure
+		make install
+	fi
 
 	cd "$curdir"
 }
@@ -1800,8 +1801,8 @@ function create_git_project
 
 
 
-	#does nothing if svn is already installed
-	install_git
+	#does nothing if git is already installed
+	git_install
 
 	#create git repository
 	mkdir -p "/srv/projects/git/$PROJ_NAME.git"
@@ -1830,6 +1831,7 @@ function create_git_project
 	#redmine
 	mkdir -p /srv/projects/redmine
 	cd /srv/projects/redmine
+	aptitude install -y subversion
 	svn checkout http://redmine.rubyforge.org/svn/branches/0.9-stable "$PROJ_NAME"
 	cd "$PROJ_NAME"
 	find . -name ".svn" | xargs rm -rf
