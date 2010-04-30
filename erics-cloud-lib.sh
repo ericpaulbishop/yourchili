@@ -1690,14 +1690,14 @@ function enable_svn_project_for_vhost
 	# if svn requires ssl just add rewrite, otherwise pass to apache http port
 	# if redmine requires ssl add rewrite, otherwise nothing
 	if [ "$FORCE_SVN_SSL" = "1" ] ; then
-		cat << EOF >/$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf
+		cat << EOF >"$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf"
 	location ~ ^/svn/.*\$
 	{
  		rewrite ^(.*)\$ https://\$host\$1 permanent;
 	}
 EOF
 	else
-		cat << EOF >/$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf
+		cat << EOF >"$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf"
 	location ~ ^/svn/.*\$
 	{
 		proxy_set_header   X-Forwarded-Proto http;
@@ -1706,7 +1706,7 @@ EOF
 EOF
 	fi
 	if [ "$FORCE_REDMINE_SSL" = "1" ] ; then
-			cat << EOF >>/$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf
+			cat << EOF >>"$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf"
 	location ~ ^/$PROJ_ID/.*$
 	{
  		rewrite ^(.*)\$ https://\$host\$1 permanent;
@@ -1717,7 +1717,7 @@ EOF
 
 	# setup ssl_include
 	# always pass ssl to apache https port
-	cat << EOF >/$NGINX_CONF_PATH/${PROJ_ID}_project_ssl.conf
+	cat << EOF >"$NGINX_CONF_PATH/${PROJ_ID}_project_ssl.conf"
 	location ~ ^/svn/.*\$
 	{
 		proxy_set_header   X-Forwarded-Proto https;
@@ -1733,7 +1733,7 @@ EOF
 
 
 	#add includes to vhosts
-	cat "/etc/nginx/sites-available/$VHOST_ID" | grep -v "^}" | grep -v "include.*${PROJ_ID}_project_ssl.conf;" >"/etc/nginx/sites-available/$VHOST_ID.tmp" 
+	cat "/etc/nginx/sites-available/$VHOST_ID" | grep -v "^}" | grep -v "include.*${PROJ_ID}_project_nossl.conf;" >"/etc/nginx/sites-available/$VHOST_ID.tmp" 
 	cat << EOF >>/etc/nginx/sites-available/$VHOST_ID.tmp
 	include $NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf;
 }
@@ -1751,6 +1751,263 @@ EOF
 	/etc/init.d/nginx restart
 
 }
+
+
+
+#####################################
+# Git / Grack / Redmine             #
+#####################################
+
+
+function git_install
+{
+	curdir=$(pwd)
+
+	aptitude install -y tk8.4 libcurl
+
+	rm -rf /tmp/git
+	mkdir -p /tmp/git
+	cd /tmp/git
+	wget http://www.kernel.org/pub/software/scm/git/git-1.7.1.tar.bz2 
+	tar xjf *.tar.bz2
+	cd git-1.7.1
+	./configure
+	make install
+
+	cd "$curdir"
+}
+
+
+function create_git_project
+{
+	#arguments
+	local DB_PASSWORD="$1"
+	local PROJ_NAME="$2"
+	local ANONYMOUS_CHECKOUT="$3"
+	local PROJ_USER_ID="$4"
+	local PROJ_PW="$5"
+	local PROJ_USER_FIRST="$6"
+	local PROJ_USER_LAST="$7"
+	local PROJ_USER_EMAIL="$8"
+	
+	local curdir=$(pwd)
+
+
+	db="$PROJ_NAME"_rm
+	mysql_create_database "$DB_PASSWORD" "$db"
+	mysql_create_user     "$DB_PASSWORD" "$db" "$PROJ_PW"
+	mysql_grant_user      "$DB_PASSWORD" "$db" "$db"
+
+
+
+	#does nothing if svn is already installed
+	install_git
+
+	#create git repository
+	mkdir -p "/srv/projects/git/$PROJ_NAME.git"
+	cd "/srv/projects/git/$PROJ_NAME.git"
+	git init
+	
+
+	#install and configure grack
+	mkdir -p "/srv/projects/grack/"
+	cd "/srv/projects/grack/"
+	git clone "https://github.com/ericpaulbishop/grack.git" 
+	rm -rf "grack/.git"
+	mv grack "$PROJ_NAME"
+	mkdir "$PROJ_NAME/public"
+	mkdir "$PROJ_NAME/tmp"
+	escaped_proj_root=$(echo "/srv/projects/git" | sed 's/\//\\\//g')
+	sed -i -e  "s/project_root.*\$/project_root => \"$escaped_proj_root\",/"  "$PROJ_NAME/config.ru"
+	sed -i -e  "s/use_redmine_auth.*\$/use_redmine_auth => true,/"            "$PROJ_NAME/config.ru"
+	sed -i -e  "s/redmine_db_type.*\$/redmine_db_type => \"Mysql\",/"         "$PROJ_NAME/config.ru"
+	sed -i -e  "s/redmine_db_host.*\$/redmine_db_host => \"localhost\",/"     "$PROJ_NAME/config.ru"
+	sed -i -e  "s/redmine_db_name.*\$/redmine_db_name => \"$db\",/"           "$PROJ_NAME/config.ru"
+	sed -i -e  "s/redmine_db_user.*\$/redmine_db_user => \"$db\",/"           "$PROJ_NAME/config.ru"
+	sed -i -e  "s/redmine_db_pass.*\$/redmine_db_pass => \"$PROJ_PW\",/"      "$PROJ_NAME/config.ru"
+	
+
+	#redmine
+	mkdir -p /srv/projects/redmine
+	cd /srv/projects/redmine
+	svn checkout http://redmine.rubyforge.org/svn/branches/0.9-stable "$PROJ_NAME"
+	cd "$PROJ_NAME"
+	find . -name ".svn" | xargs rm -rf
+
+	cat << EOF >config/database.yml
+production:
+  adapter: mysql
+  database: $db
+  host: localhost
+  username: $db
+  password: $PROJ_PW
+EOF
+
+	if [ -e config/initializers/session_store.rb ] ; then
+		RAILS_ENV=production rake config/initializers/session_store.rb
+	else
+		rake generate_session_store
+	fi
+	RAILS_ENV=production rake db:migrate
+	echo "en" | RAILS_ENV=production rake redmine:load_default_data
+	mkdir tmp public/plugin_assets
+	sudo chmod -R 755 files log tmp public/plugin_assets
+
+	#initialize redmine project data with create.rb script
+	cat << EOF >create.rb
+# Adapted From: http://github.com/edavis10/redmine_data_generator/blob/37b8acb63a4302281641090949fb0cb87e8b1039/app/models/data_generator.rb#L36
+project = Project.create(
+					:name => "$PROJ_NAME",
+					:description => "",
+					:identifier => "$PROJ_NAME",
+					:is_public =>$ANONYMOUS_CHECKOUT
+					)
+
+repo = Repository::Subversion.create(
+					:project_id=>project.id,
+					:url=>"file:///srv/projects/git/$PROJ_NAME.git"
+					)
+enmod = EnabledModule.create(
+					:project_id=>project.id,
+					:name=>"repository"
+					)
+
+@user = User.new( 
+					:language => Setting.default_language,
+					:firstname=>"$PROJ_USER_FIRST",
+					:lastname=>"$PROJ_USER_LAST",
+					:mail=>"$PROJ_USER_EMAIL"
+					)
+@user.admin = true
+@user.login = "$PROJ_USER"
+@user.password = "$PROJ_PW"
+@user.password_confirmation = "$PROJ_PW"
+@user.save
+
+@membership = Member.new(
+			:principal=>@user,
+			:project_id=>project.id,
+			:role_ids=>[3]
+			)
+@membership.save
+
+
+puts project.errors.full_messages
+puts repo.errors.full_messages
+puts enmod.errors.full_messages
+puts @user.errors.full_messages
+puts @membership.errors.full_messages
+
+EOF
+
+
+
+	#delete original admin user & update info by running create script
+	echo "DELETE FROM users WHERE login=\"admin\" ; " | mysql -u root -p"$DB_PASSWORD" "$db"
+	ruby script/console production < create.rb
+	rm -rf create.rb
+
+	chown -R www-data:www-data /srv/projects
+
+	/etc/init.d/nginx restart
+	
+	cd "$curdir"
+
+}
+
+
+
+function enable_git_project_for_vhost
+{
+	local VHOST_ID=$1
+	local PROJ_ID=$2
+	local FORCE_GIT_SSL=$3
+	local FORCE_REDMINE_SSL=$4
+	
+	
+	#enable redmine and git in non-ssl vhost, if not forcing use of ssl vhost
+	local vhost_root=$(cat "/etc/nginx/sites-available/$VHOST_ID" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
+	cat "/etc/nginx/sites-available/$VHOST_ID" | grep -v "passenger_base_uri.*$PROJ_ID;" | grep -v "passenger_base_uri.*git;" > "/etc/nginx/sites-available/$VHOST_ID.tmp" 
+	if [ "$FORCE_REDMINE_SSL" != "1" ] || [ "$FORCE_GIT_SSL" != "1" ] ; then
+		
+		
+		if [ "$FORCE_REDMINE_SSL" != "1" ] &&  [ "$FORCE_GIT_SSL" != "1" ]  ; then
+			ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$vhost_root/$PROJ_ID"
+			ln -s "/srv/projects/grack/$PROJ_ID/public" "$vhost_root/git"
+			cat "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;\n\tpassenger_base_uri  \/git;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
+		elif [ "$FORCE_REDMINE_SSL" != "1" ] ; then
+			ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$vhost_root/$PROJ_ID"
+			cat "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
+		elif [ "$FORCE_REDMINE_SSL" != "1" ] ; then
+			ln -s "/srv/projects/grack/$PROJ_ID/public" "$vhost_root/git"
+			cat "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/git;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
+
+		fi
+	fi
+	rm -rf "/etc/nginx/sites-available/$VHOST_ID.tmp" 
+
+
+	#enable redmine and git project in ssl vhost
+	if [ -n "/etc/nginx/sites-available/$NGINX_SSL_ID" ] ; then
+		nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "/$PROJ_ID" "1"
+	fi
+	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
+	ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$ssl_root/$PROJ_ID"
+	ln -s "/srv/projects/grack/$PROJ_ID/public" "$vhost_root/git"
+	cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -v "passenger_base_uri.*$PROJ_ID;" |  grep -v "passenger_base_uri.*git;"  > "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
+	cat "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;\n\tpassenger_base_uri  \/git;/g"  > "/etc/nginx/sites-available/$NGINX_SSL_ID"
+	rm -rf "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
+
+	# setup nossl_include
+	rm -rf "/$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf"
+	if [ "$FORCE_GIT_SSL" = "1" ] ; then
+		cat << EOF >>"$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf"
+	location ~ ^/git/.*\$
+	{
+ 		rewrite ^(.*)\$ https://\$host\$1 permanent;
+	}
+EOF
+	fi
+	if [ "$FORCE_REDMINE_SSL" = "1" ] ; then
+		cat << EOF >>"$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf"
+	location ~ ^/$PROJ_ID/.*\$
+	{
+ 		rewrite ^(.*)\$ https://\$host\$1 permanent;
+	}
+EOF
+	fi
+
+	#if nossl_include exists, add to vhost
+	if [ -e "$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf" ] ; then
+		cat "/etc/nginx/sites-available/$VHOST_ID" | grep -v "^}" | grep -v "include.*${PROJ_ID}_project_nossl.conf;" >"/etc/nginx/sites-available/$VHOST_ID.tmp" 
+		cat << EOF >>/etc/nginx/sites-available/$VHOST_ID.tmp
+		include $NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf;
+}
+EOF
+	fi
+	mv "/etc/nginx/sites-available/$VHOST_ID.tmp" "/etc/nginx/sites-available/$VHOST_ID"
+
+	
+	chown -R www-data:www-data /srv/www
+
+	/etc/init.d/nginx restart
+	
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
