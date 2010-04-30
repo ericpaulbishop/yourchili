@@ -1554,6 +1554,11 @@ EOF
 	mkdir tmp public/plugin_assets
 	sudo chmod -R 755 files log tmp public/plugin_assets
 
+	is_public="false"
+	if [ "$ANONYMOUS_CHECKOUT" == 1 ] || [ "$ANONYMOUS_CHECKOUT" == "true" ] ; then
+		is_public="true"
+	fi
+
 	#initialize redmine project data with create.rb script
 	cat << EOF >create.rb
 # Adapted From: http://github.com/edavis10/redmine_data_generator/blob/37b8acb63a4302281641090949fb0cb87e8b1039/app/models/data_generator.rb#L36
@@ -1561,7 +1566,7 @@ project = Project.create(
 					:name => "$PROJ_NAME",
 					:description => "",
 					:identifier => "$PROJ_NAME",
-					:is_public =>$ANONYMOUS_CHECKOUT
+					:is_public =>$is_public
 					)
 
 repo = Repository::Subversion.create(
@@ -1857,6 +1862,12 @@ EOF
 	mkdir tmp public/plugin_assets
 	sudo chmod -R 755 files log tmp public/plugin_assets
 
+	is_public="false"
+	if [ "$ANONYMOUS_CHECKOUT" == 1 ] || [ "$ANONYMOUS_CHECKOUT" == "true" ] ; then
+		is_public="true"
+	fi
+
+
 	#initialize redmine project data with create.rb script
 	cat << EOF >create.rb
 # Adapted From: http://github.com/edavis10/redmine_data_generator/blob/37b8acb63a4302281641090949fb0cb87e8b1039/app/models/data_generator.rb#L36
@@ -1864,7 +1875,7 @@ project = Project.create(
 					:name => "$PROJ_NAME",
 					:description => "",
 					:identifier => "$PROJ_NAME",
-					:is_public =>$ANONYMOUS_CHECKOUT
+					:is_public =>$is_public
 					)
 
 repo = Repository::Subversion.create(
