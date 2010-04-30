@@ -652,6 +652,8 @@ function ruby_install
 
 	gem install mysql
 	gem install rails
+	gem install dbi
+	gem install dbd-mysql
 
 	cd "$curdir"
 	rm -rf /tmp/ruby
@@ -1807,7 +1809,7 @@ function create_git_project
 	#create git repository
 	mkdir -p "/srv/projects/git/$PROJ_NAME.git"
 	cd "/srv/projects/git/$PROJ_NAME.git"
-	git init
+	git init --bare
 	
 
 	#install and configure grack
@@ -1820,7 +1822,7 @@ function create_git_project
 	mkdir "$PROJ_NAME/tmp"
 	escaped_proj_root=$(echo "/srv/projects/git" | sed 's/\//\\\//g')
 	sed -i -e  "s/project_root.*\$/project_root => \"$escaped_proj_root\",/"  "$PROJ_NAME/config.ru"
-	sed -i -e  "s/use_redmine_auth.*\$/use_redmine_auth => true,/"            "$PROJ_NAME/config.ru"
+	sed -i -e  "s/^[\t ]*:use_redmine_auth.*\$/\t:use_redmine_auth => true,/" "$PROJ_NAME/config.ru"
 	sed -i -e  "s/redmine_db_type.*\$/redmine_db_type => \"Mysql\",/"         "$PROJ_NAME/config.ru"
 	sed -i -e  "s/redmine_db_host.*\$/redmine_db_host => \"localhost\",/"     "$PROJ_NAME/config.ru"
 	sed -i -e  "s/redmine_db_name.*\$/redmine_db_name => \"$db\",/"           "$PROJ_NAME/config.ru"
@@ -1955,7 +1957,7 @@ function enable_git_project_for_vhost
 	fi
 	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
 	ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$ssl_root/$PROJ_ID"
-	ln -s "/srv/projects/grack/$PROJ_ID/public" "$vhost_root/git"
+	ln -s "/srv/projects/grack/$PROJ_ID/public"    "$ssl_root/git"
 	cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -v "passenger_base_uri.*$PROJ_ID;" |  grep -v "passenger_base_uri.*git;"  > "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
 	cat "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;\n\tpassenger_base_uri  \/git;/g"  > "/etc/nginx/sites-available/$NGINX_SSL_ID"
 	rm -rf "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
