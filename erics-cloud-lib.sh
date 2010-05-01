@@ -1878,7 +1878,7 @@ project = Project.create(
 					:is_public =>$is_public
 					)
 
-repo = Repository::Subversion.create(
+repo = Repository::Git.create(
 					:project_id=>project.id,
 					:url=>"file:///srv/projects/git/$PROJ_NAME.git"
 					)
