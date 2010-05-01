@@ -1585,7 +1585,7 @@ enmod = EnabledModule.create(
 					:mail=>"$PROJ_USER_EMAIL"
 					)
 @user.admin = true
-@user.login = "$PROJ_USER"
+@user.login = "$PROJ_USER_ID"
 @user.password = "$PROJ_PW"
 @user.password_confirmation = "$PROJ_PW"
 @user.save
@@ -1894,7 +1894,7 @@ enmod = EnabledModule.create(
 					:mail=>"$PROJ_USER_EMAIL"
 					)
 @user.admin = true
-@user.login = "$PROJ_USER"
+@user.login = "$PROJ_USER_ID"
 @user.password = "$PROJ_PW"
 @user.password_confirmation = "$PROJ_PW"
 @user.save
