@@ -1838,10 +1838,11 @@ function create_git_project
 	#redmine
 	mkdir -p /srv/projects/redmine
 	cd /srv/projects/redmine
-	aptitude install -y subversion
-	svn checkout http://redmine.rubyforge.org/svn/branches/0.9-stable "$PROJ_NAME"
+	git clone https://github.com/edavis10/redmine.git
+	mv redmine "$PROJ_NAME"
 	cd "$PROJ_NAME"
-	find . -name ".svn" | xargs rm -rf
+	git checkout "0.9-stable"
+	rm -rf .git
 
 	cat << EOF >config/database.yml
 production:
@@ -1880,7 +1881,7 @@ project = Project.create(
 
 repo = Repository::Git.create(
 					:project_id=>project.id,
-					:url=>"file:///srv/projects/git/$PROJ_NAME.git"
+					:url=>"/srv/projects/git/$PROJ_NAME.git"
 					)
 enmod = EnabledModule.create(
 					:project_id=>project.id,
