@@ -2001,13 +2001,13 @@ function enable_git_project_for_vhost
 		
 		if [ "$FORCE_REDMINE_SSL" != "1" ] &&  [ "$FORCE_GIT_SSL" != "1" ]  ; then
 			ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$vhost_root/$PROJ_ID"
-			ln -s "/srv/projects/grack/$PROJ_ID/public" "$vhost_root/git"
+			ln -s "/srv/projects/git/grack/$PROJ_ID/public" "$vhost_root/git"
 			cat "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;\n\tpassenger_base_uri  \/git;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
 		elif [ "$FORCE_REDMINE_SSL" != "1" ] ; then
 			ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$vhost_root/$PROJ_ID"
 			cat "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
 		elif [ "$FORCE_REDMINE_SSL" != "1" ] ; then
-			ln -s "/srv/projects/grack/$PROJ_ID/public" "$vhost_root/git"
+			ln -s "/srv/projects/git/grack/$PROJ_ID/public" "$vhost_root/git"
 			cat "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/git;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
 
 		fi
@@ -2021,7 +2021,7 @@ function enable_git_project_for_vhost
 	fi
 	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
 	ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$ssl_root/$PROJ_ID"
-	ln -s "/srv/projects/grack/$PROJ_ID/public"    "$ssl_root/git"
+	ln -s "/srv/projects/git/grack/$PROJ_ID/public"    "$ssl_root/git"
 	cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -v "passenger_base_uri.*$PROJ_ID;" |  grep -v "passenger_base_uri.*git;"  > "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
 	cat "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;\n\tpassenger_base_uri  \/git;/g"  > "/etc/nginx/sites-available/$NGINX_SSL_ID"
 	rm -rf "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
