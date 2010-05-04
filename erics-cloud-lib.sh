@@ -1084,7 +1084,8 @@ function install_svn
 		mkdir -p "/srv/projects/svn"
 
 		#grant permissions to apache for necessary directories
-		chown -R www-data "/srv/projects/"
+		chown    www-data:www-data "/srv/projects/"
+		chown -R www-data:www-data "/srv/projects/svn"
 
 		#restart apache
 		/etc/init.d/apache2 restart
@@ -1611,7 +1612,9 @@ EOF
 	ruby script/console production < create.rb
 	rm -rf create.rb
 
-	chown -R www-data:www-data /srv/projects
+	chown    www-data /srv/projects
+	chown -R www-data /srv/projects/redmine
+	chown -R www-data /srv/projects/svn
 
 	#nginx_delete_site "default"
 	#nginx_delete_site "localhost"
@@ -1768,9 +1771,10 @@ EOF
 
 function git_install
 {
-	curdir=$(pwd)
 
 	if [ ! -e /usr/local/libexec/git-core/git ] ; then
+		local curdir=$(pwd)
+		
 		aptitude install -y tk8.4 libcurl
 		rm -rf /tmp/git
 		mkdir -p /tmp/git
@@ -1780,9 +1784,50 @@ function git_install
 		cd git-1.7.1
 		./configure
 		make install
+		
+		cd "$curdir"
+		rm -rf /tmp/git
 	fi
 
-	cd "$curdir"
+}
+
+function gitosis_install
+{
+
+	git_install
+
+	if [ ! -d "/srv/projects/git" ] ; then
+		local curdir=$(pwd)
+		
+		cd /tmp
+		git clone git://eagain.net/gitosis.git
+		cd gitosis
+		aptitude -y install python-setuptools
+		python setup.py install
+		adduser \
+			--system \
+			--shell /bin/sh \
+			--gecos 'git version control' \
+			--ingroup www-data \
+			--disabled-password \
+			--home /srv/projects/git \
+			git
+
+		mkdir -p /srv/projects/git
+		chmod -R 755 /srv/projects/git
+		chown -R git:www-data /srv/projects/git
+		if [ ! -e /root/.ssh/id_rsa ] ; then
+			rm -rf /root/.ssh/id_rsa*
+			printf "/root/.ssh/id_rsa\n\n\n\n\n" | ssh-keygen -t rsa 
+		fi
+		sudo -H -u git gitosis-init < /root/.ssh/id_rsa.pub
+		chmod -R 775 /srv/projects/git/repositories
+		
+		cd "$curdir"
+		rm -rf /tmp/gitosis
+	fi
+
+
 }
 
 
@@ -1808,24 +1853,28 @@ function create_git_project
 
 
 
-	#does nothing if git is already installed
+	#does nothing if git/gitosis is already installed
 	git_install
+	gitosis_install
 
 	#create git repository
-	mkdir -p "/srv/projects/git/$PROJ_NAME.git"
-	cd "/srv/projects/git/$PROJ_NAME.git"
+	mkdir -p "/srv/projects/git/repositories/$PROJ_NAME.git"
+	cd "/srv/projects/git/repositories/$PROJ_NAME.git"
 	git init --bare
+	chmod -R 775 /srv/projects/git/repositories/
+	chown -R git:www-data /srv/projects/git/repositories/
+
 	
 
 	#install and configure grack
-	mkdir -p "/srv/projects/grack/"
-	cd "/srv/projects/grack/"
+	mkdir -p "/srv/projects/git/grack/"
+	cd "/srv/projects/git/grack/"
 	git clone "https://github.com/ericpaulbishop/grack.git" 
 	rm -rf "grack/.git"
 	mv grack "$PROJ_NAME"
 	mkdir "$PROJ_NAME/public"
 	mkdir "$PROJ_NAME/tmp"
-	escaped_proj_root=$(echo "/srv/projects/git" | sed 's/\//\\\//g')
+	escaped_proj_root=$(echo "/srv/projects/git/repositories" | sed 's/\//\\\//g')
 	sed -i -e  "s/project_root.*\$/project_root => \"$escaped_proj_root\",/"  "$PROJ_NAME/config.ru"
 	sed -i -e  "s/^[\t ]*:use_redmine_auth.*\$/\t:use_redmine_auth => true,/" "$PROJ_NAME/config.ru"
 	sed -i -e  "s/redmine_db_type.*\$/redmine_db_type => \"Mysql\",/"         "$PROJ_NAME/config.ru"
@@ -1833,6 +1882,8 @@ function create_git_project
 	sed -i -e  "s/redmine_db_name.*\$/redmine_db_name => \"$db\",/"           "$PROJ_NAME/config.ru"
 	sed -i -e  "s/redmine_db_user.*\$/redmine_db_user => \"$db\",/"           "$PROJ_NAME/config.ru"
 	sed -i -e  "s/redmine_db_pass.*\$/redmine_db_pass => \"$PROJ_PW\",/"      "$PROJ_NAME/config.ru"
+	chown -R www-data:www-data /srv/projects/git/grack 
+
 	
 
 	#redmine
@@ -1881,7 +1932,7 @@ project = Project.create(
 
 repo = Repository::Git.create(
 					:project_id=>project.id,
-					:url=>"/srv/projects/git/$PROJ_NAME.git"
+					:url=>"/srv/projects/git/repositories/$PROJ_NAME.git"
 					)
 enmod = EnabledModule.create(
 					:project_id=>project.id,
@@ -1923,7 +1974,8 @@ EOF
 	ruby script/console production < create.rb
 	rm -rf create.rb
 
-	chown -R www-data:www-data /srv/projects
+	chown    www-data:www-data /srv/projects
+	chown -R www-data:www-data /srv/projects/redmine
 
 	/etc/init.d/nginx restart
 	
