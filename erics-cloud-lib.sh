@@ -674,8 +674,10 @@ function nginx_create_site
 	port="80"
 	ssl_cert=""
 	ssl_ckey=""
+	ssl=""
 	if [ "$is_ssl" = "1" ] ; then
-		port="443 default ssl";
+		port="443"
+		ssl="ssl                  on;"
 		ssl_cert="ssl_certificate      $NGINX_CONF_PATH/ssl/nginx.pem;"
 		ssl_ckey="ssl_certificate_key  $NGINX_CONF_PATH/ssl/nginx.key;"
 		if [ ! -e "$NGINX_CONF_PATH/ssl/nginx.pem" ] || [ ! -e "$NGINX_CONF_PATH/ssl/nginx.key"  ] ; then
@@ -696,6 +698,7 @@ server
 	access_log           $NGINX_PREFIX/$server_id/logs/access.log;
 	root                 $NGINX_PREFIX/$server_id/public_html;
 	index                index.html index.htm index.php index.cgi;
+	$ssl
 	$ssl_cert
 	$ssl_ckey
 
