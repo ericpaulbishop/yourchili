@@ -652,8 +652,15 @@ function ruby_install
 
 	gem install mysql
 	gem install rails
+
+	#necessary for redmine grack auth
 	gem install dbi
 	gem install dbd-mysql
+
+	#necessary for redmine gitosis plugin
+	gem install inifile
+	gem install net-ssh
+	gem install lockfile
 
 	cd "$curdir"
 	rm -rf /tmp/ruby
@@ -1976,6 +1983,24 @@ EOF
 	echo "DELETE FROM users WHERE login=\"admin\" ; " | mysql -u root -p"$DB_PASSWORD" "$db"
 	ruby script/console production < create.rb
 	rm -rf create.rb
+
+
+	#gitosis plugin
+	cd vendor/plugins
+	git clone https://github.com/ericpaulbishop/redmine_gitosis.git
+	cd redmine_gitosis
+	rm -rf .git
+	sed -i -e  "s/'gitosisUrl.*\$/'gitosisUrl' => 'git@localhost:gitosis-admin.git',/"                                         "init.rb"
+	sed -i -e  "s/'gitosisIdentityFile.*\$/'gitosisIdentityFile' => '\/srv\/projects\/redmine\/$PROJ_NAME\/.ssh\/id_rsa',/"    "init.rb"
+	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrl' => 'git@localhost:',/"                                              "init.rb"
+	sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                        "init.rb"
+	cp -r ~/.ssh "/srv/projects/redmine/$PROJ_NAME/"
+	chown -R www-data:www-data "/srv/projects/redmine/$PROJ_NAME/"
+	chmod 600 "/srv/projects/redmine/$PROJ_NAME/.ssh/id_rsa"
+	cd "/srv/projects/redmine/$PROJ_NAME/"
+	rake db:migrate_plugins RAILS_ENV=production
+
+
 
 	chown    www-data:www-data /srv/projects
 	chown -R www-data:www-data /srv/projects/redmine
