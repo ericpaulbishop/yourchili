@@ -2068,7 +2068,7 @@ function enable_git_project_for_vhost
 
 
 	#enable redmine and git project in ssl vhost
-	if [ -n "/etc/nginx/sites-available/$NGINX_SSL_ID" ] ; then
+	if [ -z "/etc/nginx/sites-available/$NGINX_SSL_ID" ] ; then
 		nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "/$PROJ_ID" "1"
 	fi
 	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
