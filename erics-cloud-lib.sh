@@ -1944,10 +1944,11 @@ repo = Repository::Git.create(
 					:project_id=>project.id,
 					:url=>"/srv/projects/git/repositories/$PROJ_NAME.git"
 					)
-enmod = EnabledModule.create(
-					:project_id=>project.id,
-					:name=>"repository"
-					)
+
+project.enabled_module_names("repository", "issue_tracking")
+project.trackers = Tracker.all
+project.save
+
 
 @user = User.new( 
 					:language => Setting.default_language,
@@ -2000,6 +2001,13 @@ EOF
 	cd "/srv/projects/redmine/$PROJ_NAME/"
 	rake db:migrate_plugins RAILS_ENV=production
 
+
+	#single project plugin
+	cd vendor/plugins
+	git clone https://github.com/ericpaulbishop/redmine_single_project.git
+	cd redmine_single_project
+	rm -rf .git
+	cd "/srv/projects/redmine/$PROJ_NAME/"
 
 
 	chown    www-data:www-data /srv/projects
