@@ -1943,6 +1943,7 @@ EOF
 	is_public="false"
 	if [ "$ANONYMOUS_CHECKOUT" == 1 ] || [ "$ANONYMOUS_CHECKOUT" == "true" ] ; then
 		is_public="true"
+		echo "$is_public" > "is_public"
 	fi
 
 
@@ -2049,6 +2050,19 @@ function enable_git_project_for_vhost
 	local PROJ_ID=$2
 	local FORCE_GIT_SSL=$3
 	local FORCE_REDMINE_SSL=$4
+
+	gitosis_init="/srv/projects/redmine/$PROJ_ID/vendor/plugins/redmine_gitosis/init.rb"
+	public=""
+	if [ -e "/srv/projects/redmine/$PROJ_ID/is_public" ] ; then
+		public=$(grep "true" "/srv/projects/redmine/$PROJ_ID/is_public")
+	fi
+	if [ -n "$public" ] ; then
+		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => ['http:\/\/$VHOST_ID\/git\/'],/"                     "$gitosis_init"
+	else
+		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => [],/"                                                "$gitosis_init"
+	fi
+	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => ['git@$VHOST_ID:','https:\/\/[user]@$VHOST_ID\/git\/'],/"  "$gitosis_init"
+
 	
 	
 	#enable redmine and git in non-ssl vhost, if not forcing use of ssl vhost
@@ -2113,8 +2127,8 @@ EOF
 		include $NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf;
 }
 EOF
+		mv "/etc/nginx/sites-available/$VHOST_ID.tmp" "/etc/nginx/sites-available/$VHOST_ID"
 	fi
-	mv "/etc/nginx/sites-available/$VHOST_ID.tmp" "/etc/nginx/sites-available/$VHOST_ID"
 
 	
 	chown -R www-data:www-data /srv/www
