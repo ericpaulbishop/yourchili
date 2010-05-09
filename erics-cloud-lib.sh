@@ -1615,6 +1615,9 @@ puts enmod.errors.full_messages
 puts @user.errors.full_messages
 puts @membership.errors.full_messages
 
+
+
+
 EOF
 
 	#delete original admin user & update info by running create script
@@ -1975,6 +1978,12 @@ puts repo.errors.full_messages
 puts enmod.errors.full_messages
 puts @user.errors.full_messages
 puts @membership.errors.full_messages
+
+anon = Role.anonymous
+nonm = Role.non_member
+anon.add_permission!( ["add_issues"] )
+nonm.add_permission!( ["add_issues"] )
+
 
 EOF
 
