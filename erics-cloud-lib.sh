@@ -1861,7 +1861,9 @@ function create_git_project
 	local PROJ_USER_FIRST="$6"
 	local PROJ_USER_LAST="$7"
 	local PROJ_USER_EMAIL="$8"
-	
+	local FORCE_SSL_AUTH="$9"	
+
+
 	local curdir=$(pwd)
 
 
@@ -1894,13 +1896,18 @@ function create_git_project
 	mkdir "$PROJ_NAME/public"
 	mkdir "$PROJ_NAME/tmp"
 	escaped_proj_root=$(echo "/srv/projects/git/repositories/$PROJ_NAME.git" | sed 's/\//\\\//g')
-	sed -i -e  "s/project_root.*\$/project_root => \"$escaped_proj_root\",/"  "$PROJ_NAME/config.ru"
-	sed -i -e  "s/^[\t ]*:use_redmine_auth.*\$/\t:use_redmine_auth => true,/" "$PROJ_NAME/config.ru"
-	sed -i -e  "s/redmine_db_type.*\$/redmine_db_type => \"Mysql\",/"         "$PROJ_NAME/config.ru"
-	sed -i -e  "s/redmine_db_host.*\$/redmine_db_host => \"localhost\",/"     "$PROJ_NAME/config.ru"
-	sed -i -e  "s/redmine_db_name.*\$/redmine_db_name => \"$db\",/"           "$PROJ_NAME/config.ru"
-	sed -i -e  "s/redmine_db_user.*\$/redmine_db_user => \"$db\",/"           "$PROJ_NAME/config.ru"
-	sed -i -e  "s/redmine_db_pass.*\$/redmine_db_pass => \"$PROJ_PW\",/"      "$PROJ_NAME/config.ru"
+	sed -i -e  "s/project_root.*\$/project_root => \"$escaped_proj_root\",/"          "$PROJ_NAME/config.ru"
+	sed -i -e  "s/use_redmine_auth.*\$/use_redmine_auth      => true,/"               "$PROJ_NAME/config.ru"
+	sed -i -e  "s/redmine_db_type.*\$/redmine_db_type       => \"Mysql\",/"           "$PROJ_NAME/config.ru"
+	sed -i -e  "s/redmine_db_host.*\$/redmine_db_host       => \"localhost\",/"       "$PROJ_NAME/config.ru"
+	sed -i -e  "s/redmine_db_name.*\$/redmine_db_name       => \"$db\",/"             "$PROJ_NAME/config.ru"
+	sed -i -e  "s/redmine_db_user.*\$/redmine_db_user       => \"$db\",/"             "$PROJ_NAME/config.ru"
+	sed -i -e  "s/redmine_db_pass.*\$/redmine_db_pass       => \"$PROJ_PW\",/"        "$PROJ_NAME/config.ru"
+	if [ "$FORCE_SSL_AUTH" = "1" ] ; then
+		sed -i -e  "s/require_ssl_for_auth.*\$/require_ssl_for_auth  => true,/"   "$PROJ_NAME/config.ru"
+	else
+		sed -i -e  "s/require_ssl_for_auth.*\$/require_ssl_for_auth  => false,/"  "$PROJ_NAME/config.ru"
+	fi
 	chown -R www-data:www-data /srv/projects/git/grack 
 
 	
