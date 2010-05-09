@@ -1584,10 +1584,10 @@ repo = Repository::Subversion.create(
 					:project_id=>project.id,
 					:url=>"file:///srv/projects/svn/$PROJ_NAME"
 					)
-enmod = EnabledModule.create(
-					:project_id=>project.id,
-					:name=>"repository"
-					)
+
+project.enabled_module_names=(["repository", "issue_tracking"])
+project.trackers = Tracker.all
+project.save
 
 @user = User.new( 
 					:language => Setting.default_language,
@@ -1945,7 +1945,7 @@ repo = Repository::Git.create(
 					:url=>"/srv/projects/git/repositories/$PROJ_NAME.git"
 					)
 
-project.enabled_module_names("repository", "issue_tracking")
+project.enabled_module_names=(["repository", "issue_tracking"])
 project.trackers = Tracker.all
 project.save
 
