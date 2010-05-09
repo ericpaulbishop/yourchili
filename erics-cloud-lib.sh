@@ -1616,6 +1616,12 @@ puts @user.errors.full_messages
 puts @membership.errors.full_messages
 
 
+anon = Role.anonymous
+nonm = Role.non_member
+anon.add_permission!( "add_issues" )
+nonm.add_permission!( "add_issues" )
+
+
 
 
 EOF
@@ -1981,8 +1987,8 @@ puts @membership.errors.full_messages
 
 anon = Role.anonymous
 nonm = Role.non_member
-anon.add_permission!( ["add_issues"] )
-nonm.add_permission!( ["add_issues"] )
+anon.add_permission!( "add_issues" )
+nonm.add_permission!( "add_issues" )
 
 
 EOF
