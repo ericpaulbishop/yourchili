@@ -2003,6 +2003,19 @@ EOF
 	rm -rf create.rb
 
 
+	#post-receive hook
+	pr_file="/srv/projects/git/repositories/$PROJ_NAME.git/hooks/post-receive"
+	cat << EOF > "$pr_file"
+	cd "/srv/projects/redmine/$PROJ_NAME"
+	ruby script/runner "Repository.fetch_changesets" -e production
+EOF
+
+	chmod -R 775 log #when hook is called, both git and www-data need write access to log directory
+	chmod    775 "$pr_file"
+	chown git:www-data "$pr_file"
+
+
+
 	#gitosis plugin
 	cd vendor/plugins
 	git clone https://github.com/ericpaulbishop/redmine_gitosis.git
