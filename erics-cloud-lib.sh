@@ -1621,8 +1621,10 @@ nonm = Role.non_member
 anon.add_permission!( "add_issues" )
 nonm.add_permission!( "add_issues" )
 
-
-
+closedIssueStatus = IssueStatus.find(:first, :conditions=>"name = \"Closed\"")
+if(defined?(closedIssueStatus['id']))
+	Setting.commit_fix_status_id = closedIssueStatus['id']
+end
 
 EOF
 
