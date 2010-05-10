@@ -1609,13 +1609,6 @@ project.save
 @membership.save
 
 
-puts project.errors.full_messages
-puts repo.errors.full_messages
-puts enmod.errors.full_messages
-puts @user.errors.full_messages
-puts @membership.errors.full_messages
-
-
 anon = Role.anonymous
 nonm = Role.non_member
 anon.add_permission!( "add_issues" )
@@ -1989,17 +1982,16 @@ project.save
 @membership.save
 
 
-puts project.errors.full_messages
-puts repo.errors.full_messages
-puts enmod.errors.full_messages
-puts @user.errors.full_messages
-puts @membership.errors.full_messages
-
 anon = Role.anonymous
 nonm = Role.non_member
 anon.add_permission!( "add_issues" )
 nonm.add_permission!( "add_issues" )
 
+
+closedIssueStatus = IssueStatus.find(:first, :conditions=>"name = \"Closed\"")
+if(defined?(closedIssueStatus['id']))
+	Setting.commit_fix_status_id = closedIssueStatus['id']
+end
 
 EOF
 
