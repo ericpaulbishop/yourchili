@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ./erics-cloud-lib.sh
+. ./redcloud.sh
 
 
 HOSTNAME="cori-celesti.org"
