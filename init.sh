@@ -32,6 +32,19 @@ nginx_ensite "www.thisisnotmyfacebook.com"
 #create_svn_project "$DB_PASSWORD" "miner" "1" "admin" "password" "super" "user" "superuser@mydomain.com"
 #enable_svn_project_for_vhost "www.salamander-linux.com" "miner" "1" "0"
 
-create_git_project "$DB_PASSWORD" "miner" "1" "admin" "password" "super" "user" "superuser@mydomain.com" "1"
-enable_git_project_for_vhost "www.salamander-linux.com" "miner" "0" "0"
+#create_git_project "$DB_PASSWORD" "miner" "1" "admin" "password" "super" "user" "superuser@mydomain.com" "1"
+#enable_git_project_for_vhost "www.salamander-linux.com" "miner" "0" "0"
+
+create_redmine_project "$DB_PASSWORD" "miner" "miner" "1" "git" "Miner" "admin" "password" "super" "user" "superuser@mydomain.com" "1"
+
+create_redmine_project "$DB_PASSWORD" "miner2" "miner2" "1" "svn" "Miner2" "admin" "password" "super" "user" "superuser@mydomain.com" "1"
+
+enable_git_project_for_vhost "www.salamander-linux.com" "miner"  "miner" "0" "0" "0"
+enable_svn_project_for_vhost "www.salamander-linux.com" "miner2" "1" "0"
+
+
+
+
+
+
 

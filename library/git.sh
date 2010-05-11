@@ -615,10 +615,10 @@ function enable_git_project_for_vhost
 			mkdir -p "$vhost_root/git"
 			ln -s "/srv/projects/git/grack/$PROJ_ID/public" "$vhost_root/git/$PROJ_ID.git"
 			ln -s "/srv/projects/redmine/$REDMINE_ID/public"   "$vhost_root/$REDMINE_ID"
-			cat   "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;\n\tpassenger_base_uri  \/git\/$PROJ_ID.git;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
+			cat   "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$REDMINE_ID;\n\tpassenger_base_uri  \/git\/$PROJ_ID.git;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
 		elif [ "$FORCE_REDMINE_SSL" != "1" ] ; then
-			ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$vhost_root/$PROJ_ID"
-			cat   "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
+			ln -s "/srv/projects/redmine/$REDMINE_ID/public"  "$vhost_root/$REDMINE_ID"
+			cat   "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$REDMINE_ID;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
 		elif [ "$FORCE_REDMINE_SSL" != "1" ] ; then
 			mkdir -p "$vhost_root/git"
 			ln -s "/srv/projects/git/grack/$PROJ_ID/public" "$vhost_root/git/$PROJ_ID.git"
@@ -630,15 +630,15 @@ function enable_git_project_for_vhost
 
 	#enable redmine and git project in ssl vhost
 	if [ -z "/etc/nginx/sites-available/$NGINX_SSL_ID" ] ; then
-		nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "/$PROJ_ID" "1"
+		nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "/$REDMINE_ID" "1"
 	fi
 	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
 	mkdir -p "$ssl_root/git"
 	ln -s "/srv/projects/git/grack/$PROJ_ID/public" "$ssl_root/git/$PROJ_ID.git"
-	ln -s "/srv/projects/redmine/$PROJ_ID/public"   "$ssl_root/$PROJ_ID"
+	ln -s "/srv/projects/redmine/$REDMINE_ID/public"   "$ssl_root/$REDMINE"
 
-	cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -v "passenger_base_uri.*$PROJ_ID;" | grep -v "passenger_base_uri.*$PROJ_ID.git;" > "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
-	cat "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;\n\tpassenger_base_uri  \/git\/$PROJ_ID.git;/g"  > "/etc/nginx/sites-available/$NGINX_SSL_ID"
+	cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -v "passenger_base_uri.*$REDMINE_ID;" | grep -v "passenger_base_uri.*$PROJ_ID.git;" > "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
+	cat "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$REDMINE_ID;\n\tpassenger_base_uri  \/git\/$PROJ_ID.git;/g"  > "/etc/nginx/sites-available/$NGINX_SSL_ID"
 	rm -rf "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
 
 	# setup nossl_include
@@ -653,12 +653,21 @@ EOF
 	fi
 	if [ "$FORCE_REDMINE_SSL" = "1" ] ; then
 		cat << EOF >>"$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf"
-	location ~ ^/$PROJ_ID/.*\$
+	location ~ ^/$REDMINE_ID/.*\$
 	{
  		rewrite ^(.*)\$ https://\$host\$1 permanent;
 	}
 EOF
+	if [ "REDMINE_IS_ROOT" = "1" ] ; then
+		cat << EOF >>"$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf"
+	location /
+	{
+ 		rewrite ^(.*)\$ /${REDMINE_ID} permanent;
+	}
+EOF
+
 	fi
+
 
 	#if nossl_include exists, add to vhost
 	if [ -e "$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf" ] ; then
