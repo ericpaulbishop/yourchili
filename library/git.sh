@@ -157,6 +157,8 @@ function create_svn
 	cd ..
 	rm -rf "$PROJ_ID"
 
+	chown -R www-data:www-data /srv/projects/svn
+
 	db="$REDMINE_ID"_rm
 	better_redmine_auth_pm
 	cat << EOF >"/etc/apache2/sites-available/auth_$PROJ_ID"
