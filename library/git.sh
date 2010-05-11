@@ -217,6 +217,13 @@ function create_redmine_project
 	mysql_grant_user      "$DB_PASSWORD" "$db" "$db"
 
 
+	#In order to clone redmine repo we need git,
+	#and gitosis plugin gets installed even if we're using SVN
+	#so just go ahead and install git & gitosis no matter what
+	#does nothing if git/gitosis is already installed
+	git_install
+	gitosis_install
+
 	#redmine
 	mkdir -p /srv/projects/redmine
 	cd /srv/projects/redmine
