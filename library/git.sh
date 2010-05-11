@@ -635,7 +635,7 @@ function enable_git_project_for_vhost
 	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
 	mkdir -p "$ssl_root/git"
 	ln -s "/srv/projects/git/grack/$PROJ_ID/public" "$ssl_root/git/$PROJ_ID.git"
-	ln -s "/srv/projects/redmine/$REDMINE_ID/public"   "$ssl_root/$REDMINE"
+	ln -s "/srv/projects/redmine/$REDMINE_ID/public"   "$ssl_root/$REDMINE_ID"
 
 	cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -v "passenger_base_uri.*$REDMINE_ID;" | grep -v "passenger_base_uri.*$PROJ_ID.git;" > "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" 
 	cat "/etc/nginx/sites-available/$NGINX_SSL_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$REDMINE_ID;\n\tpassenger_base_uri  \/git\/$PROJ_ID.git;/g"  > "/etc/nginx/sites-available/$NGINX_SSL_ID"
@@ -651,6 +651,7 @@ function enable_git_project_for_vhost
 	}
 EOF
 	fi
+
 	if [ "$FORCE_REDMINE_SSL" = "1" ] ; then
 		cat << EOF >>"$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf"
 	location ~ ^/$REDMINE_ID/.*\$
@@ -658,6 +659,9 @@ EOF
  		rewrite ^(.*)\$ https://\$host\$1 permanent;
 	}
 EOF
+	fi
+
+
 	if [ "REDMINE_IS_ROOT" = "1" ] ; then
 		cat << EOF >>"$NGINX_CONF_PATH/${PROJ_ID}_project_nossl.conf"
 	location /
