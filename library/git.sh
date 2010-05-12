@@ -678,7 +678,36 @@ function enable_redmine_for_vhost
 
 	
 
+	# setup nossl_include
+	nossl_conf="$NGINX_CONF_PATH/${REDMINE_ID}_${VHOST_ID}_redmine.conf"
+	rm -rf "$nossl_conf"
+
+	if [ "$FORCE_REDMINE_SSL" = "1" ] || [ "$FORCE_REDMINE_SSL" = "true" ] ; then
+		cat << EOF >>"$nossl_conf"
+location ~ ^/$REDMINE_ID/.*\$
+{
+	rewrite ^(.*)\$ https://\$host\$1 permanent;
 }
+EOF
+	fi
+
+
+	if [ "$REDMINE_IS_ROOT" = "1" ] || [ "$REDMINE_IS_ROOT" = "true" ]; then
+		cat << EOF >>"$nossl_conf"
+location /
+{
+	rewrite ^(.*)\$ /${REDMINE_ID} permanent;
+}
+EOF
+	fi
+
+	if [ -e "$nossl_conf" ] ; then
+		nginx_enable_include_for_vhost "$vhost_config" "$nossl_conf"
+	fi
+}
+
+
+
 
 function enable_git_project_for_vhost
 {
