@@ -103,7 +103,7 @@ function create_git
 	mkdir "$PROJ_ID/tmp"
 	escaped_proj_root=$(echo "/srv/projects/git/repositories/$PROJ_ID.git" | sed 's/\//\\\//g')
 	sed -i -e  "s/project_root.*\$/project_root => \"$escaped_proj_root\",/"             "$PROJ_ID/config.ru"
-	sed -i -e  "s/use_redmine_auth.*\$/use_redmine_auth      => true,/"                  "$PROJ_ID/config.ru"
+	sed -i -e  "s/use_redmine_auth.*=>.*\$/use_redmine_auth      => true,/"                  "$PROJ_ID/config.ru"
 	sed -i -e  "s/redmine_db_type.*\$/redmine_db_type       => \"Mysql\",/"              "$PROJ_ID/config.ru"
 	sed -i -e  "s/redmine_db_host.*\$/redmine_db_host       => \"localhost\",/"          "$PROJ_ID/config.ru"
 	sed -i -e  "s/redmine_db_name.*\$/redmine_db_name       => \"$db\",/"                "$PROJ_ID/config.ru"
@@ -509,7 +509,7 @@ function enable_git_for_vhost
 	local PROJ_ID=$2
 	local FORCE_GIT_SSL=$3
 
-	#enable redmine in non-ssl vhost, if not forcing use of ssl vhost
+	#enable git in non-ssl vhost, if not forcing use of ssl vhost
 	local vhost_root=$(cat "/etc/nginx/sites-available/$VHOST_ID" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
 	vhost_config="/etc/nginx/sites-available/$VHOST_ID"
 	
@@ -520,14 +520,14 @@ function enable_git_for_vhost
 	fi
 
 
-	#enable redmine and git project in ssl vhost
+	#enable git and git project in ssl vhost
 	ssl_config="/etc/nginx/sites-available/$NGINX_SSL_ID"
 	if [ ! -e "$ssl_config" ] ; then
 		nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "/git/$PROJ_ID.git" "1"
 	fi
 	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
 	mkdir -p "$ssl_root/git"
-	ln -s "/srv/projects/redmine/$PROJ_ID/public"   "$ssl_root/git/$PROJ_ID.git"
+	ln -s "/srv/projects/git/grack/$PROJ_ID/public"   "$ssl_root/git/$PROJ_ID.git"
 	nginx_enable_passenger_uri_for_vhost "$ssl_config" "/git/$PROJ_ID.git"
 
 
