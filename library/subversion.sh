@@ -741,20 +741,23 @@ function enable_svn_project_for_vhost
 {
 	local VHOST_ID=$1
 	local PROJ_ID=$2
-	local FORCE_SVN_SSL=$3
-	local FORCE_REDMINE_SSL=$4
+	local REDMINE_ID=$3
+	local FORCE_SVN_SSL=$4
+	local FORCE_REDMINE_SSL=$5
+	local REDMINE_IS_ROOT=$6
 	
 	#enable redmine project in vhost, if not forcing use of ssl vhost
 	if [ "$FORCE_REDMINE_SSL" != "1" ] ; then
 		local vhost_root=$(cat "/etc/nginx/sites-available/$VHOST_ID" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
-		ln -s "/srv/projects/redmine/$PROJ_ID/public"  "$vhost_root/$PROJ_ID"
+		ln -s "/srv/projects/redmine/$REDMINE_ID/public"  "$vhost_root/$REDMINE_ID"
 		cat "/etc/nginx/sites-available/$VHOST_ID" | grep -v "passenger_base_uri.*$PROJ_ID;" > "/etc/nginx/sites-available/$VHOST_ID.tmp" 
 		cat "/etc/nginx/sites-available/$VHOST_ID.tmp" | sed -e "s/^.*passenger_enabled.*\$/\tpassenger_enabled   on;\n\tpassenger_base_uri  \/$PROJ_ID;/g"  > "/etc/nginx/sites-available/$VHOST_ID"
 		rm -rf "/etc/nginx/sites-available/$VHOST_ID.tmp" 
 	fi
 
+
 	#enable redmine project in ssl vhost
-	if [ -n "/etc/nginx/sites-available/$NGINX_SSL_ID" ] ; then
+	if [ -z "/etc/nginx/sites-available/$NGINX_SSL_ID" ] ; then
 		nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "/$PROJ_ID" "1"
 	fi
 	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
