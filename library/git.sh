@@ -601,7 +601,6 @@ EOF
 	nginx_enable_include_for_vhost "$ssl_config"   "$ssl_include"
 
 	/etc/init.d/nginx restart
-
 }
 
 
