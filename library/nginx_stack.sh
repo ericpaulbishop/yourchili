@@ -294,6 +294,54 @@ function nginx_delete_site
 	/etc/init.d/nginx restart
 }
 
+
+function nginx_add_passenger_uri_for_vhost
+{
+	local VHOST_CONFIG_FILE=$1
+	local URI=$2
+
+	escaped_uri=$(echo "$URI" | sed 's/\//\\\//g')
+	escaped_search_uri=$(echo "$escaped_uri" | sed 's/\./\\./g')
+	escaped_search_uri=$(echo "$escaped_search_uri" | sed 's/\-/\\-/g')
+	escaped_search_uri=$(echo "$escaped_search_uri" | sed 's/\$/\\$/g')
+	escaped_search_uri=$(echo "$escaped_search_uri" | sed 's/\^/\\^/g')
+	#I don't think any other special characters are going to be showing up in the uri...
+	
+
+	NL=$'\\\n'
+	TAB=$'\\\t'
+	cat "$VHOST_CONFIG_FILE" | grep -v -P "^[\t ]*passenger_base_uri[\t ]+$escaped_search_uri;"  > "$VHOST_CONFIG_FILE.tmp" 
+	enabled_line=$(grep -P "^[\t ]*passenger_enabled[\t ]+" "$VHOST_CONFIG_FILE")
+	if [ -n "$enabled_line" ] ; then
+		
+		cat   "$VHOST_CONFIG_FILE.tmp" | sed -e "s/passenger_enabled.*$/passenger_enabled   on;${NL}${TAB}passenger_base_uri  $escaped_uri;/g"  > "$VHOST_CONFIG_FILE"
+	else
+		cat   "$VHOST_CONFIG_FILE.tmp" | sed -e "s/^{$/{${NL}${TAB}passenger_enabled   on;${NL}${TAB}passenger_base_uri  $escaped_uri;/g"  > "$VHOST_CONFIG_FILE"
+	fi
+	rm -rf "$VHOST_CONFIG_FILE.tmp" 
+
+}
+
+function nginx_add_include_for_vhost
+{
+	local VHOST_CONFIG_FILE=$1
+	local INCLUDE_FILE=$2
+
+	escaped_search_include=$(echo "$INCLUDE_FILE" | sed 's/\//\\\//g')
+	escaped_search_include=$(echo "$escaped_search_include" | sed 's/\./\\./g')
+	escaped_search_include=$(echo "$escaped_search_include" | sed 's/\-/\\-/g')
+	escaped_search_include=$(echo "$escaped_search_include" | sed 's/\$/\\$/g')
+	escaped_search_include=$(echo "$escaped_search_include" | sed 's/\^/\\^/g')
+	
+	
+	cat "$VHOST_CONFIG_FILE" | grep -v -P "^[\t ]*passenger_base_uri[\t ]+$escaped_search_include;" | grep -v "^}[\t ]*$"  > "$VHOST_CONFIG_FILE.tmp" 
+	printf "\tinclude $INCLUDE_FILE;\n" >>"$VHOST_CONFIG_FILE.tmp"
+	echo "}" >>"$VHOST_CONFIG_FILE.tmp"
+	mv "$VHOST_CONFIG_FILE.tmp" "$VHOST_CONFIG_FILE"
+}
+
+
+
 function nginx_install 
 {
 	if [ ! -n "$1" ]; then
