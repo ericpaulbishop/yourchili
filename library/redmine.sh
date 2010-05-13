@@ -216,7 +216,7 @@ function enable_redmine_for_vhost
 	else
 		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => '',/"                                             "$gitosis_init"
 	fi
-	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => 'git@$VHOST_ID:,https:\/\/[user]@$VHOST_ID\/git\/'],/"  "$gitosis_init"
+	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => 'git@$VHOST_ID:,https:\/\/[user]@$VHOST_ID\/git\/',/"  "$gitosis_init"
 
 
 
