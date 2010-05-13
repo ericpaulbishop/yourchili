@@ -334,7 +334,7 @@ function nginx_add_include_for_vhost
 	escaped_search_include=$(echo "$escaped_search_include" | sed 's/\^/\\^/g')
 	
 	
-	cat "$VHOST_CONFIG_FILE" | grep -v -P "^[\t ]*passenger_base_uri[\t ]+$escaped_search_include;" | grep -v "^}[\t ]*$"  > "$VHOST_CONFIG_FILE.tmp" 
+	cat "$VHOST_CONFIG_FILE" | grep -v -P "^[\t ]*include[\t ]+$escaped_search_include;" | grep -v "^}[\t ]*$"  > "$VHOST_CONFIG_FILE.tmp" 
 	printf "\tinclude $INCLUDE_FILE;\n" >>"$VHOST_CONFIG_FILE.tmp"
 	echo "}" >>"$VHOST_CONFIG_FILE.tmp"
 	mv "$VHOST_CONFIG_FILE.tmp" "$VHOST_CONFIG_FILE"
