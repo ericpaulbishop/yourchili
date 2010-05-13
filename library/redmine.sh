@@ -101,6 +101,9 @@ EOF
 	#initialize redmine project data with create.rb script
 	cat << EOF >create.rb
 # Adapted From: http://github.com/edavis10/redmine_data_generator/blob/37b8acb63a4302281641090949fb0cb87e8b1039/app/models/data_generator.rb#L36
+
+require 'tmpdir'
+
 project = Project.create(
 					:name => "$PROJ_NAME",
 					:description => "",
@@ -261,6 +264,9 @@ function add_redmine_project
 	#add redmine project data with add.rb script
 	cat << EOF >add.rb
 # Adapted From: http://github.com/edavis10/redmine_data_generator/blob/37b8acb63a4302281641090949fb0cb87e8b1039/app/models/data_generator.rb#L36
+
+require 'tmpdir'
+
 project = Project.create(
 					:name => "$PROJ_NAME",
 					:description => "",
