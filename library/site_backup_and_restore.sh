@@ -152,7 +152,7 @@ function backup_projects
 	if [ -d /srv/projects/redmine ] ; then	
 		cp -r /srv/projects/redmine .
 	fi
-	if [ -d  /srv/projects/git ]		
+	if [ -d  /srv/projects/git ] ; then	
 		cp -r /srv/projects/git .
 	fi
 
