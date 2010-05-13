@@ -255,7 +255,7 @@ EOF
 	fi
 	if [ "$REDMINE_IS_ROOT" = "1" ] || [ "$REDMINE_IS_ROOT" = "true" ]; then
 		cat << EOF >>"$nossl_include"
-location /
+location ~ ^/(index\..*)?$
 {
 	rewrite ^(.*)\$ /${REDMINE_ID} permanent;
 }
