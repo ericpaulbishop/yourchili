@@ -199,6 +199,17 @@ EOF
 	rm -rf .git
 	cd "/srv/projects/redmine/$REDMINE_ID/"
 
+	#action_mailer_optional_tls plugin
+	script/plugin install git://github.com/collectiveidea/action_mailer_optional_tls.git
+
+
+	#themes
+	git clone https://github.com/ericpaulbishop/redmine_theme_pack.git
+	mkdir -p public/themes
+	mv redmine_theme_pack/* public/themes/
+	rm -rf redmine_theme_pack
+
+
 
 	chown    www-data:www-data /srv/projects
 	chown -R www-data:www-data /srv/projects/redmine
