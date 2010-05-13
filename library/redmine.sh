@@ -172,7 +172,6 @@ EOF
 	rm -rf .git
 	sed -i -e  "s/'gitosisUrl.*\$/'gitosisUrl' => 'git@localhost:gitosis-admin.git',/"                                         "init.rb"
 	sed -i -e  "s/'gitosisIdentityFile.*\$/'gitosisIdentityFile' => '\/srv\/projects\/redmine\/$REDMINE_ID\/.ssh\/id_rsa',/"   "init.rb"
-	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrl' => 'git@localhost:',/"                                              "init.rb"
 	sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                        "init.rb"
 	cp -r ~/.ssh "/srv/projects/redmine/$REDMINE_ID/"
 	chown -R www-data:www-data "/srv/projects/redmine/$REDMINE_ID/"
@@ -213,11 +212,11 @@ function enable_redmine_for_vhost
 		public=$(grep "true" "/srv/projects/redmine/$REDMINE_ID/is_public")
 	fi
 	if [ -n "$public" ] ; then
-		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => ['http:\/\/$VHOST_ID\/git\/'],/"                     "$gitosis_init"
+		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => 'http:\/\/$VHOST_ID\/git\/',/"                    "$gitosis_init"
 	else
-		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => [],/"                                                "$gitosis_init"
+		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => '',/"                                             "$gitosis_init"
 	fi
-	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => ['git@$VHOST_ID:','https:\/\/[user]@$VHOST_ID\/git\/'],/"  "$gitosis_init"
+	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => 'git@$VHOST_ID:,https:\/\/[user]@$VHOST_ID\/git\/'],/"  "$gitosis_init"
 
 
 
