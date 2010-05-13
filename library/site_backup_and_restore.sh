@@ -147,15 +147,25 @@ function backup_projects
 	mkdir -p /tmp/projects
 	cd       /tmp/projects
 
-	cp -r /srv/projects/redmine .
-	mkdir svn
+	#NOTE: You need to backup the database separately!
+	#      Use backup_mysql function in this library
+	if [ -d /srv/projects/redmine ] ; then	
+		cp -r /srv/projects/redmine .
+	fi
+	if [ -d  /srv/projects/git ]		
+		cp -r /srv/projects/git .
+	fi
 
-	proj_list=$(ls /srv/projects/redmine)
-	for proj in $proj_list ; do
-		if [ -e "/var/projects/svn/$proj" ] ; then
-			svnadmin hotcopy "/var/projects/svn/$proj" "./svn/$proj"
-		fi
-	done
+	if [ -d /srv/projects/svn ] ; then
+		mkdir svn
+
+		proj_list=$(ls /srv/projects/redmine)
+		for proj in $proj_list ; do
+			if [ -e "/var/projects/svn/$proj" ] ; then
+				svnadmin hotcopy "/var/projects/svn/$proj" "./svn/$proj"
+			fi
+		done
+	fi
 
 	cd ..
 	tar cjfp "$BACKUP_DIR/projects.tar.bz2" projects
