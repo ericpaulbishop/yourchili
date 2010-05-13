@@ -65,12 +65,21 @@ EOF
 	mkdir tmp public/plugin_assets
 	sudo chmod -R 755 files log tmp public/plugin_assets
 
+
+	# save whether we have a public project here 
+	# yes, this should be on a per-project basis, but
+	# this only matters for display of urls in gitosis plugin, so
+	# it's not that big a deal and can easily be changed later
 	is_public="false"
 	if [ "$IS_PUBLIC" == 1 ] || [ "$IS_PUBLIC" == "true" ] ; then
 		is_public="true"
 		echo "$is_public" > "is_public"
 	fi
-	chmod -R 775 log  #for git, when hook is called both git and www-data users (which are in the same www-data group) need write access to log directory
+
+
+	# for git, when hook is called both git and www-data users 
+	# (which are in the same www-data group) need write access to log directory
+	chmod -R 775 log  
 
 
 
@@ -196,6 +205,115 @@ EOF
 	cd "$curdir"
 
 }
+
+
+function add_redmine_project
+{
+	#arguments
+	local REDMINE_ID=$1                  #id for redmine installation, will be installed to /srv/projects/redmine/$REDMINE_ID
+	local PROJ_ID=$2                     #id for project being created, this will appear in SCM URLs
+	local IS_PUBLIC=$3                   #is this project publicly visible?  Can anyone grab the code?
+	local SCM=$4                         #SCM to use, currently only "git" and "svn" are supported
+	local PROJ_NAME=$5                   #project name, as it will appear in redmine
+	local REDMINE_ADMIN_USER=$6          #redmine admin user name, must already exist
+	local REDMINE_ADMIN_PW=$7            #doubles as redmine admin user pw & redmine database pw
+	local FORCE_SSL_AUTH=$8              #return unauthorized if someone tries to perform password-protected operation over http and not https, only works when SCM=git
+	
+	
+	local curdir=$(pwd)
+
+
+	#cd to redmine directory, crap out if it doesn't exist
+	if [ ! -d "/srv/projects/redmine/$REDMINE_ID" ] ; then
+		return 1 
+	fi
+	cd "/srv/projects/redmine/$REDMINE_ID"
+
+
+	# save whether we have a public project here 
+	# yes, this should be on a per-project basis, but
+	# this only matters for display of urls in gitosis plugin, so
+	# it's not that big a deal and can easily be changed later
+	is_public="false"
+	if [ "$IS_PUBLIC" == 1 ] || [ "$IS_PUBLIC" == "true" ] ; then
+		is_public="true"
+		echo "$is_public" > "is_public"
+	fi
+
+
+	# for git, when hook is called both git and www-data users 
+	# (which are in the same www-data group) need write access to log directory
+	chmod -R 775 log  
+
+
+
+	#SCM stuff
+	if [ "$SCM" = "git" ] ; then
+		 create_git "$PROJ_ID" "$REDMINE_ID" "$REDMINE_ADMIN_PW" "$FORCE_SSL_AUTH"
+	
+	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
+		create_svn "$PROJ_ID" "$REDMINE_ID" "$REDMINE_ADMIN_PW" 
+	else
+		echo "not implemented yet"
+		return 1
+	fi
+
+	#add redmine project data with add.rb script
+	cat << EOF >add.rb
+# Adapted From: http://github.com/edavis10/redmine_data_generator/blob/37b8acb63a4302281641090949fb0cb87e8b1039/app/models/data_generator.rb#L36
+project = Project.create(
+					:name => "$PROJ_NAME",
+					:description => "",
+					:identifier => "$PROJ_ID",
+					:is_public =>$is_public
+					)
+EOF
+
+	if [ "$SCM" = "git" ] ; then
+		cat << EOF >>add.rb
+repo = Repository::Git.create(
+					:project_id=>project.id,
+					:url=>"/srv/projects/git/repositories/$PROJ_ID.git"
+					)
+EOF
+	elif [ "$SCM" = "svn" ] || [ "$SCM" = "subversion" ] ; then
+			cat << EOF >>add.rb
+repo = Repository::Subversion.create(
+					:project_id=>project.id,
+					:url=>"file:///srv/projects/svn/$PROJ_ID"
+					)
+EOF
+	fi
+
+	cat << EOF >>add.rb
+
+project.enabled_module_names=(["repository", "issue_tracking"])
+project.trackers = Tracker.all
+project.save
+
+@user = User.find(:first, :conditions=>"login = \"$REDMINE_ADMIN_USER\"")
+
+
+@membership = Member.new(
+			:principal=>@user,
+			:project_id=>project.id,
+			:role_ids=>[3]
+			)
+@membership.save
+
+EOF
+	ruby script/console production < add.rb
+	rm -rf add.rb
+
+
+	/etc/init.d/nginx restart
+
+	cd "$curdir"
+
+}
+
+
+
 
 
 
