@@ -393,9 +393,10 @@ function nginx_install
 	wget "http://nginx.org/download/nginx-$NGINX_VER.tar.gz"
 	tar -xzvf "nginx-$NGINX_VER.tar.gz"
 
-	#Oh?  So you think it's Apache?  I wonder why those exploits you're tyring aren't working.... BUWHAHAHAHAH!
-	cat "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c" | sed 's/\"Server: nginx\"/\"Server: Apache\"/g' > /tmp/ngx_h1.tmp
-	cat /tmp/ngx_h1.tmp | sed 's/\"Server: \".*NGINX_VER/\"Server: Apache\/2.2.3\"/g' > "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
+	#I think Reddit has the right idea here....
+	#Lil' Bobby Tables, aint he so cute?
+	cat "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c" | sed "s/\"Server: nginx\"/\"Server: '; DROP TABLE server_types; --\"/g" > /tmp/ngx_h1.tmp
+	cat /tmp/ngx_h1.tmp | sed "s/\"Server: \".*NGINX_VER/\"Server: '; DROP TABLE servertypes; --\"/g" > "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
 
 
 	#maek eet
