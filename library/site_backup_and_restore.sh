@@ -14,23 +14,19 @@ function backup_sites
 	
 	local curdir=$(pwd)
 
-	mkdir -p "$BACKUP_DIR/sites"
-	mkdir -p "$BACKUP_DIR/nginx_site_configs"
-	mkdir -p "$BACKUP_DIR/nginx_configs"
-	mkdir -p "$BACKUP_DIR/apache_site_configs"
-	mkdir -p "$BACKUP_DIR/apache_configs"
 
-	cp /etc/nginx/*.conf "$BACKUP_DIR/nginx_configs"
-	cp -r /etc/nginx/ssl "$BACKUP_DIR/nginx_configs"
-	cp /etc/apache2/*.conf "$BACKUP_DIR/apache_configs"
-	cp -r /etc/apache2/ssl "$BACKUP_DIR/apache_configs"
-
-
-	if [ -d /srv/www/logs ] ; then
-		tar cjfp "$BACKUP_DIR/sites/logs.tar.bz2" "/srv/www/logs"
+	if [ -d /srv/www/nginx_logs ] ; then
+		tar cjfp "$BACKUP_DIR/sites/nginx_logs.tar.bz2" "/srv/www/nginx_logs"
 	fi
 	
 	if [ -d "/etc/nginx/sites-enabled" ] ; then
+		mkdir -p "$BACKUP_DIR/sites"
+		mkdir -p "$BACKUP_DIR/nginx_site_configs"
+		mkdir -p "$BACKUP_DIR/nginx_configs"
+		cp /etc/nginx/*.conf "$BACKUP_DIR/nginx_configs"
+		cp -r /etc/nginx/ssl "$BACKUP_DIR/nginx_configs"
+
+
 		cp /etc/nginx/sites-enabled/* "$BACKUP_DIR/nginx_site_configs"
 		nginx_site_roots=$(cat /etc/nginx/sites-enabled/* 2>/dev/null | grep root | awk '{ print $2 }' | sed 's/;//g')
 		for site_root in $nginx_site_roots ; do
@@ -44,6 +40,13 @@ function backup_sites
 		done
 	fi
 	if [ -d "/etc/apache2/sites-enabled" ] ; then
+		mkdir -p "$BACKUP_DIR/sites"
+		mkdir -p "$BACKUP_DIR/apache_site_configs"
+		mkdir -p "$BACKUP_DIR/apache_configs"
+		cp /etc/apache2/*.conf "$BACKUP_DIR/apache_configs"
+		cp -r /etc/apache2/ssl "$BACKUP_DIR/apache_configs"
+
+
 		cp /etc/apache2/sites-enabled/* "$BACKUP_DIR/apache_site_configs"
 		apache_site_roots=$(cat /etc/apache2/sites-enabled/* 2>/dev/null | grep DocumentRoot  | awk '{ print $2 }')
 		for site_root in $apache_site_roots ; do
@@ -74,7 +77,7 @@ function restore_sites
 	if [ -d "/etc/nginx/" ]  && [ -d "$BACKUP_DIR/nginx_configs" ] ; then
 		cp -r "$BACKUP_DIR"/nginx_configs/* /etc/nginx/
 	fi
-	if [ -d "/etc/apache2/" ]  && [ -d "$BACKUP_DIR/apache2_configs" ] ; then
+	if [ -d "/etc/apache2/" ]  && [ -d "$BACKUP_DIR/apache_configs" ] ; then
 		cp -r "$BACKUP_DIR"/apache_configs/* /etc/apache2/
 	fi
 
