@@ -188,11 +188,33 @@ function restore_projects
 	local BACKUP_DIR="$1"
 
 	local curdir=$(pwd)
-	
+
+	git_install
+	gitosis_install
+
+
 	if [ -e "$BACKUP_DIR/projects.tar.bz2" ] ; then
 		mkdir -p /srv/
 		cd /srv
+		rm -rf tmp
+		mkdir tmp
+		cd tmp
 		tar xjfp "$BACKUP_DIR/projects.tar.bz2"
+		if [ ! -d ./projects/git ] ; then
+			mv /srv/projects/git ./projects/
+		fi
+		rm -rf /srv/projects
+		mv projects /srv/
+		
+		admin_keys=$(find . -name "id_rsa*")
+		for k in $admin_keys ; do
+			cp "$k" /root/.ssh/
+		done
+		
+	fi
+ 
+	if [ -d "/srv/projects/svn" ] ; then
+		install_svn
 	fi
 
 	cd "$curdir"
