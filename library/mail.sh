@@ -12,7 +12,7 @@ function initialize_mail_server
 
 	upgrade_system
 
-	if [ -d	"/home/vmail" ] ; then
+	if [ -d	"/srv/mail" ] ; then
 		echo "ERROR: mail server already initialized"
 		return 1;
 	fi
@@ -29,7 +29,7 @@ function initialize_mail_server
 	postconf -e "myhostname = localhost"
 	
 	postconf -e "virtual_mailbox_domains = /etc/postfix/vhosts"
-	postconf -e "virtual_mailbox_base = /home/vmail"
+	postconf -e "virtual_mailbox_base = /srv/mail"
 	postconf -e "virtual_mailbox_maps = hash:/etc/postfix/vmaps"
 	postconf -e "virtual_minimum_uid = 1000"
 	postconf -e "virtual_uid_maps = static:5000"
@@ -144,7 +144,7 @@ EOF
 	#configure virtual mailboxes
 	
 	groupadd -g 5000 vmail
-	useradd -m -u 5000 -g 5000 -s /bin/bash vmail
+	useradd -m -u 5000 -g 5000 -s /bin/bash -d /srv/mail vmail
 	cat <<'EOF' >/etc/dovecot/dovecot.conf
 base_dir = /var/run/dovecot/
 disable_plaintext_auth = no
@@ -158,7 +158,7 @@ login_dir = /var/run/dovecot/login
 login_chroot = yes
 login_user = dovecot
 login_greeting = Dovecot ready.
-mail_location = maildir:/home/vmail/%d/%n
+mail_location = maildir:/srv/mail/%d/%n
 mmap_disable = no
 valid_chroot_dirs = /var/spool/vmail
 
@@ -201,7 +201,7 @@ domain=`cat /tmp/user | cut -f2 -d "@"`
 
 touch /etc/dovecot/users
 cat /etc/dovecot/users | grep -v "^$user@$domain:" > /etc/dovecot/users.tmp
-echo "$user@$domain::5000:5000::/home/vmail/$domain/:/bin/false::" >>/etc/dovecot/users.tmp
+echo "$user@$domain::5000:5000::/srv/mail/$domain/:/bin/false::" >>/etc/dovecot/users.tmp
 mv /etc/dovecot/users.tmp /etc/dovecot/users
 
 touch /etc/postfix/vhosts
@@ -214,9 +214,9 @@ cat /etc/postfix/vmaps | grep -v "$1" >/etc/postfix/vmaps.tmp
 echo $1 $domain/$user/ >>/etc/postfix/vmaps.tmp
 mv /etc/postfix/vmaps.tmp /etc/postfix/vmaps
 
-/usr/bin/maildirmake.dovecot /home/vmail/$domain/$user 5000:5000
-chown -R vmail /home/vmail/*
-chgrp -R vmail /home/vmail/*
+/usr/bin/maildirmake.dovecot /srv/mail/$domain/$user 5000:5000
+chown -R vmail /srv/mail/*
+chgrp -R vmail /srv/mail/*
 
 mkpasswd --hash=md5 $2 >/tmp/hash
 echo "$1:`cat /tmp/hash`" >> /etc/dovecot/passwd
@@ -251,6 +251,7 @@ EOF
 }
 
 
+
 function backup_mail_config
 {
 	if [ ! -n "$1" ]; then
@@ -263,13 +264,15 @@ function backup_mail_config
 	mkdir -p /tmp/mail_backup
 	cp -rp /etc/postfix /tmp/mail_backup/
 	cp -rp /etc/dovecot /tmp/mail_backup/
-	cp -rp /home/vmail  /tmp/mail_backup/
+	cp -rp /srv/mail  /tmp/mail_backup/
 	local curdir=$(pwd)	
 	cd /tmp
 	tar cjfp "$BACKUP_DIR/mail_backup.tar.bz2" mail_backup
 	cd "$curdir"
 	rm -rf /tmp/mail_backup
 }
+
+
 
 function restore_mail_config
 {
@@ -279,19 +282,19 @@ function restore_mail_config
 	fi
 	local BACKUP_DIR="$1"
 
-	if [ ! -e /home/vmail ] ; then
+	if [ ! -e /srv/mail ] ; then
 		initialize_mail_server "dummy.com" "dummy_pass" "0" "1"
 	fi
 
 	if [ -e "$BACKUP_DIR/mail_backup.tar.bz2" ] ; then
 		rm -rf /tmp/mail_backup
 		tar -C /tmp -xjf $BACKUP_DIR/mail_backup.tar.bz2
-		rm -rf /etc/postfix /etc/dovecot /home/vmail/*
+		rm -rf /etc/postfix /etc/dovecot /srv/mail/*
 		mv /tmp/mail_backup/postfix /etc/
 		mv /tmp/mail_backup/dovecot /etc/
-		mv /tmp/mail_backup/vmail/* /home/vmail
-		chown -R vmail /home/vmail/*
-		chgrp -R vmail /home/vmail/*
+		mv /tmp/mail_backup/vmail/* /srv/mail
+		chown -R vmail /srv/mail/*
+		chgrp -R vmail /srv/mail/*
 		rm -rf /tmp/mail_backup
 	
 		/etc/init.d/saslauthd restart
