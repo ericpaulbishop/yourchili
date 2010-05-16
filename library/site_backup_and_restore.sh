@@ -93,8 +93,9 @@ function restore_sites
 				site_name=$(echo "$site_dir" | sed 's/^.*\///g')
 				echo "site_name = $site_name"
 				if [ -e "$BACKUP_DIR/sites/$site_name.tar.bz2" ] ; then
-					site_parent_dir=$(echo "$site_root" | sed 's/\/.*$//g')
+					site_parent_dir=$(echo "$site_root" | awk 'BEGIN  { FS="/"  }; { for(i=1;i<NF;i++){ printf $i"/"; }     }')
 					cd "$site_parent_dir"
+					rm -rf "$site_name"
 					tar xjfp "$BACKUP_DIR/sites/$site_name.tar.bz2"
 				else
 					mkdir -p "$site_dir/public_html"
