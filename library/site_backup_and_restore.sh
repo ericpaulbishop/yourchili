@@ -16,7 +16,9 @@ function backup_sites
 
 
 	if [ -d /srv/www/nginx_logs ] ; then
-		tar cjfp "$BACKUP_DIR/sites/nginx_logs.tar.bz2" "/srv/www/nginx_logs"
+		mkdir -p  "$BACKUP_DIR/sites"
+		cd /srv/www
+		tar cjfp "$BACKUP_DIR/sites/nginx_logs.tar.bz2" "nginx_logs"
 	fi
 	
 	if [ -d "/etc/nginx/sites-enabled" ] ; then
