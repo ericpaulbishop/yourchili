@@ -205,11 +205,21 @@ function restore_projects
 		fi
 		rm -rf /srv/projects
 		mv projects /srv/
-		
+		cd ..
+		rm -rf tmp
+
 		admin_keys=$(find . -name "id_rsa*")
 		for k in $admin_keys ; do
 			cp "$k" /root/.ssh/
 		done
+
+		chown -R www-data:www-data /srv/projects
+		if [ -d /srv/projects/git ] ; then
+			chown -R git:www-data /srv/projects/git
+		fi
+		if [ -d /srv/projects/git/grack ] ; then
+			chown -R www-data:www-data /srv/projects/git/grack
+		fi
 		
 	fi
  
