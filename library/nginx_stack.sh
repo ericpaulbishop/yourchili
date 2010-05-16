@@ -89,7 +89,7 @@ function php_fpm_install
 	cp "/tmp/phpcrap/php-$PHP_VER/php.ini-production" /usr/local/lib/php/php.ini
 
 	#set default timezone to UTC to avoid errors from php date functions
-	sed -i -e 's/^date\.timezone.*$/date\.timezone = "UTC"/g' /usr/local/lib/php/php.ini
+	sed -i -e 's/^;date\.timezone.*$/date\.timezone = "UTC"/g' /usr/local/lib/php/php.ini
 
 
 	#set permissions
