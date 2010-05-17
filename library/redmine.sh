@@ -87,8 +87,13 @@ EOF
 
 	#SCM stuff
 	if [ "$SCM" = "git" ] ; then
-		 create_git "$PROJ_ID" "$REDMINE_ID" "$REDMINE_ADMIN_PW" "$FORCE_SSL_AUTH"
-	
+		create_git "$PROJ_ID" "$REDMINE_ID" "$REDMINE_ADMIN_PW" "$FORCE_SSL_AUTH"
+		if [ "$is_public" = "true" ] ; then
+			touch "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+			chmod -R 775 "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+			chown -R git:www-data "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+		fi
+
 	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
 		create_svn "$PROJ_ID" "$REDMINE_ID" "$REDMINE_ADMIN_PW" 
 	else
@@ -263,8 +268,13 @@ function add_redmine_project
 
 	#SCM stuff
 	if [ "$SCM" = "git" ] ; then
-		 create_git "$PROJ_ID" "$REDMINE_ID" "$REDMINE_ADMIN_PW" "$FORCE_SSL_AUTH"
-	
+		create_git "$PROJ_ID" "$REDMINE_ID" "$REDMINE_ADMIN_PW" "$FORCE_SSL_AUTH"
+		if [ "$is_public" = "true" ] ; then
+			touch "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+			chmod -R 775 "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+			chown -R git:www-data "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+		fi
+
 	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
 		create_svn "$PROJ_ID" "$REDMINE_ID" "$REDMINE_ADMIN_PW" 
 	else
@@ -341,17 +351,19 @@ function enable_redmine_for_vhost
 	local FORCE_REDMINE_SSL=$3
 	local REDMINE_IS_ROOT=$4
 	
+
+	vhost_domain=$(echo $VHOST_ID | sed 's/^www\.//g')
 	gitosis_init="/srv/projects/redmine/$REDMINE_ID/vendor/plugins/redmine_gitosis/init.rb"
 	public=""
 	if [ -e "/srv/projects/redmine/$REDMINE_ID/is_public" ] ; then
 		public=$(grep "true" "/srv/projects/redmine/$REDMINE_ID/is_public")
 	fi
 	if [ -n "$public" ] ; then
-		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => 'http:\/\/$VHOST_ID\/git\/',/"                    "$gitosis_init"
+		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => 'git:\/\/$vhost_domain\/,http:\/\/$vhost_domain\/git\/',/"  "$gitosis_init"
 	else
-		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => '',/"                                             "$gitosis_init"
+		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => '',/"                                                       "$gitosis_init"
 	fi
-	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => 'git@$VHOST_ID:,https:\/\/[user]@$VHOST_ID\/git\/',/"  "$gitosis_init"
+	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => 'git@$vhost_domain:,https:\/\/[user]@$vhost_domain\/git\/',/"     "$gitosis_init"
 
 
 
