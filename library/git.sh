@@ -25,6 +25,8 @@ function git_install
 		
 		cd "$curdir"
 		rm -rf /tmp/git
+
+	
 	fi
 
 }
@@ -63,6 +65,41 @@ function gitosis_install
 		
 		cd "$curdir"
 		rm -rf /tmp/gitosis
+
+		#git daemon init 
+		#(only exports public projects, with git-daemon-export-ok file, so by default it is secure)
+		cat << 'EOF' > /etc/init.d/git-daemon
+#!/bin/sh
+
+test -f /usr/local/libexec/git-core/git-daemon || exit 0
+
+. /lib/lsb/init-functions
+
+GITDAEMON_OPTIONS="--reuseaddr --verbose --base-path=/srv/projects/git/repositories/ --detach"
+
+case "$1" in
+start)  log_daemon_msg "Starting git-daemon"
+
+        start-stop-daemon --start -c git:www-data --quiet --background \
+                     --exec /usr/local/libexec/git-core/git-daemon -- ${GITDAEMON_OPTIONS}
+
+        log_end_msg $?
+        ;;
+stop)   log_daemon_msg "Stopping git-daemon"
+
+        start-stop-daemon --stop --quiet --name git-daemon
+
+        log_end_msg $?
+        ;;
+*)      log_action_msg "Usage: /etc/init.d/git-daemon {start|stop}"
+        exit 2
+        ;;
+esac
+exit 0
+EOF
+		update-rc.d git-daemon defaults
+		/etc/init.d/git-daemon start
+
 	fi
 
 
