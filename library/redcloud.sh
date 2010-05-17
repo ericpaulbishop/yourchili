@@ -10,6 +10,7 @@ if [ -z "$REDCLOUD_INSTALL_DIR" ] ; then
 fi
 
 source "$REDCLOUD_INSTALL_DIR/constants.sh"
+source "$REDCLOUD_INSTALL_DIR/random.sh"
 source "$REDCLOUD_INSTALL_DIR/hostname.sh"
 source "$REDCLOUD_INSTALL_DIR/user.sh"
 source "$REDCLOUD_INSTALL_DIR/upgrade.sh"
