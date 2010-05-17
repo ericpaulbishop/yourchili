@@ -9,6 +9,8 @@ if [ -z "$REDCLOUD_INSTALL_DIR" ] ; then
 	REDCLOUD_INSTALL_DIR="./library" 
 fi
 
+export REDCLOUD_INSTALL_DIR
+
 source "$REDCLOUD_INSTALL_DIR/constants.sh"
 source "$REDCLOUD_INSTALL_DIR/random.sh"
 source "$REDCLOUD_INSTALL_DIR/hostname.sh"
