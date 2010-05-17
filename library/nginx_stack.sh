@@ -89,7 +89,7 @@ function php_fpm_install
 	cp "/tmp/phpcrap/php-$PHP_VER/php.ini-production" /usr/local/lib/php/php.ini
 
 	#set default timezone to UTC to avoid errors from php date functions
-	sed -i -e 's/^date\.timezone.*$/date\.timezone = "UTC"/g' /usr/local/lib/php/php.ini
+	sed -i -e 's/^;date\.timezone.*$/date\.timezone = "UTC"/g' /usr/local/lib/php/php.ini
 
 
 	#set permissions
@@ -315,7 +315,7 @@ function nginx_add_passenger_uri_for_vhost
 	NL=$'\\\n'
 	TAB=$'\\\t'
 	cat "$VHOST_CONFIG_FILE" | grep -v -P "^[\t ]*passenger_base_uri[\t ]+$escaped_search_uri;"  > "$VHOST_CONFIG_FILE.tmp" 
-	enabled_line=$(grep -P "^[\t ]*passenger_enabled[\t ]+" "$VHOST_CONFIG_FILE")
+	enabled_line=$(grep -P "^[\t #]*passenger_enabled[\t ]+" "$VHOST_CONFIG_FILE")
 	if [ -n "$enabled_line" ] ; then
 		
 		cat   "$VHOST_CONFIG_FILE.tmp" | sed -e "s/passenger_enabled.*$/passenger_enabled   on;${NL}${TAB}passenger_base_uri  $escaped_uri;/g"  > "$VHOST_CONFIG_FILE"
