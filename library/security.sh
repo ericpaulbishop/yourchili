@@ -10,9 +10,12 @@ function set_open_ports
 	#(fail2ban temporarily blocks IPs that make a bunch of failed login attempts via ssh)
 	aptitude -y install  fail2ban ufw
 	
-	#up the max fail2ban attempts, since I can be a bit dimwitted at times...
+	#up the max fail2ban attempts to 12, since I can be a bit dimwitted at times...
 	cat /etc/fail2ban/jail.conf | sed 's/maxretry.*/maxretry = 12/g' > /etc/fail2ban/jail.conf.tmp
 	mv /etc/fail2ban/jail.conf.tmp /etc/fail2ban/jail.conf 
+
+	#reset, removing all old rules
+	ufw reset
 
 	#always allow ssh
 	ufw default deny
