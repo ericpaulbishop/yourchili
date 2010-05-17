@@ -138,14 +138,21 @@ EOF
 	
 	dpkg-statoverride --force --update --add root sasl 755 /var/spool/postfix/var/run/saslauthd
 	
-	
-	
+
+	#if dovecot version > 1.1 we need ssl = yes, otherwise ssl_disable = no
+	ssl_enabled="ssl_disable = no"
+	dovecot_major_version=$(dovecot --version | sed 's/\./ /g' | awk ' { v=(100*$1 + $2); print v ; } ' )
+	if [ "$dovecot_major_version" -gt 101 ] ; then
+		ssl_enabled="ssl = yes"
+	fi
+
 	
 	#configure virtual mailboxes
 	
 	groupadd -g 5000 vmail
 	useradd -m -u 5000 -g 5000 -s /bin/bash -d /srv/mail vmail
-	cat <<'EOF' >/etc/dovecot/dovecot.conf
+	echo "$ssl_enabled" > /etc/dovecot/dovecot.conf
+	cat <<'EOF' >>/etc/dovecot/dovecot.conf
 base_dir = /var/run/dovecot/
 disable_plaintext_auth = no
 protocols = imap pop3
@@ -153,7 +160,6 @@ shutdown_clients = yes
 log_path = /var/log/dovecot
 info_log_path = /var/log/dovecot.info
 log_timestamp = "%Y-%m-%d %H:%M:%S "
-ssl_disable = no
 login_dir = /var/run/dovecot/login
 login_chroot = yes
 login_user = dovecot
@@ -297,6 +303,16 @@ function restore_mail_config
 		chgrp -R vmail /srv/mail/*
 		rm -rf /tmp/mail_backup
 	
+
+		
+		#if dovecot version > 1.1 we need ssl = yes, otherwise ssl_disable = no
+		dovecot_major_version=$(dovecot --version | sed 's/\./ /g' | awk ' { v=(100*$1 + $2); print v ; } ' )
+		if [ "$dovecot_major_version" -gt 101 ] ; then
+			sed -i -e 's/^ssl_disable.*no.*$/ssl = yes/g' /etc/dovecot/dovecot.conf
+			sed -i -e 's/^ssl_disable.*yes.*$/ssl = no/g' /etc/dovecot/dovecot.conf
+		fi
+
+
 		/etc/init.d/saslauthd restart
 		/etc/init.d/dovecot restart
 		/etc/init.d/postfix restart
