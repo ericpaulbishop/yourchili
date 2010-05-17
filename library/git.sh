@@ -97,6 +97,7 @@ stop)   log_daemon_msg "Stopping git-daemon"
 esac
 exit 0
 EOF
+		chmod 755 /etc/init.d/git-daemon
 		update-rc.d git-daemon defaults
 		/etc/init.d/git-daemon start
 
