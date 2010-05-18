@@ -42,7 +42,7 @@ function gitosis_install
 		cd /tmp
 		git clone git://eagain.net/gitosis.git
 		cd gitosis
-		aptitude -y install python-setuptools
+		aptitude install -y python-setuptools
 		python setup.py install
 		adduser \
 			--system \

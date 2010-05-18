@@ -28,7 +28,7 @@ function apache_install {
 
 
 	# installs apache2 with prefork MPM
-	aptitude -y install apache2-mpm-prefork ssl-cert 
+	aptitude install -y apache2-mpm-prefork ssl-cert 
 	local PERPROCMEM=20   # the amount of memory in MB each apache process is likely to utilize, assume apache processes will explode in size like they always do
 	local MAXREQUESTS=100 # number of sessions served before apache process is refreshed, 0 for unlimited
 	local MEM=$(grep MemTotal /proc/meminfo | awk '{ print int($2/1024) }') # how much memory in MB this system has
@@ -133,7 +133,7 @@ function install_svn
 
 		#install apache
 		apache_install "$APACHE_HTTP_PORT" "$APACHE_HTTPS_PORT" #should be firewalled -- we're just going to serve SVN through these ports to NGINX
-		aptitude -y install wget subversion subversion-tools libapache2-svn libapache-dbi-perl libapache2-mod-perl2 libdbd-mysql-perl libdigest-sha1-perl libapache2-mod-wsgi
+		aptitude install -y wget subversion subversion-tools libapache2-svn libapache-dbi-perl libapache2-mod-perl2 libdbd-mysql-perl libdigest-sha1-perl libapache2-mod-wsgi
 
 		#enable necessary apache modules	
 		a2enmod rewrite

@@ -195,7 +195,7 @@ EOF
 
 function better_stuff
 {
-	aptitude -y install unzip wget vim less imagemagick sudo
+	aptitude install -y unzip wget vim less imagemagick sudo
 	better_bash_prompt
 }
 

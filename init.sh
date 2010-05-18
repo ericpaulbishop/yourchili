@@ -74,8 +74,8 @@ nginx_delete_site default
 # 10) Last name of redmine admin user
 # 11) Email address of redmine admin user
 # 12) Whether to force SSL when using http, if authorization is required (only valid for git projects)
-create_redmine_project   "$DB_PASSWORD" "miner1" "my_git_proj1" "1" "git" "My Git One" "$USER" "$USER_PW" "$USER_FIRST_NAME" "$USER_LAST_NAME" "$USER_EMAIL" "1"
-create_redmine_project   "$DB_PASSWORD" "miner2" "my_svn_proj1" "1" "svn" "My SVN One" "$USER" "$USER_PW" "$USER_FIRST_NAME" "$USER_LAST_NAME" "$USER_EMAIL"
+create_redmine_project   "$DB_PASSWORD" "miner1" "my-git-proj1" "1" "git" "My Git One" "$USER" "$USER_PW" "$USER_FIRST_NAME" "$USER_LAST_NAME" "$USER_EMAIL" "1"
+create_redmine_project   "$DB_PASSWORD" "miner2" "my-svn-proj1" "1" "svn" "My SVN One" "$USER" "$USER_PW" "$USER_FIRST_NAME" "$USER_LAST_NAME" "$USER_EMAIL"
 
 
 #add two additional git projects to second redmine installation
@@ -90,8 +90,8 @@ create_redmine_project   "$DB_PASSWORD" "miner2" "my_svn_proj1" "1" "svn" "My SV
 #  6) Redmine admin username (must already exist)
 #  7) Redmine admin password 
 #  8) Whether to force SSL when using http, if authorization is required (only valid for git projects)
-add_redmine_project "miner2" "my_git_proj2" "1" "git" "My Git Two"   "$USER" "$USER_PW" "1"
-add_redmine_project "miner2" "my_git_proj3" "1" "git" "My Git Three" "$USER" "$USER_PW" "1"
+add_redmine_project "miner2" "my-git-proj2" "1" "git" "My Git Two"   "$USER" "$USER_PW" "1"
+add_redmine_project "miner2" "my-git-proj3" "1" "git" "My Git Three" "$USER" "$USER_PW" "1"
 
 
 # now that we've created the redmine installs/projects we need to enable them
@@ -113,10 +113,10 @@ add_redmine_project "miner2" "my_git_proj3" "1" "git" "My Git Three" "$USER" "$U
 enable_redmine_for_vhost "mysite.com" "miner1" "0" "1"
 enable_redmine_for_vhost "thatothersite.com" "miner2" "0" "1"
 
-enable_git_for_vhost     "mysite.com"        "my_git_proj1" "0"
-enable_git_for_vhost     "thatothersite.com" "my_git_proj2" "0"
-enable_git_for_vhost     "thatothersite.com" "my_git_proj3" "0"
-enable_svn_for_vhost     "thatothersite.com" "my_svn_proj1" "1"
+enable_git_for_vhost     "mysite.com"        "my-git-proj1" "0"
+enable_git_for_vhost     "thatothersite.com" "my-git-proj2" "0"
+enable_git_for_vhost     "thatothersite.com" "my-git-proj3" "0"
+enable_svn_for_vhost     "thatothersite.com" "my-svn-proj1" "1"
 
 
 

@@ -203,7 +203,7 @@ function nginx_create_site
 		ssl_cert="ssl_certificate      $NGINX_CONF_PATH/ssl/nginx.pem;"
 		ssl_ckey="ssl_certificate_key  $NGINX_CONF_PATH/ssl/nginx.key;"
 		if [ ! -e "$NGINX_CONF_PATH/ssl/nginx.pem" ] || [ ! -e "$NGINX_CONF_PATH/ssl/nginx.key"  ] ; then
-			aptitude -y install ssl-cert
+			aptitude install -y ssl-cert
 			mkdir -p "$NGINX_CONF_PATH/ssl"
 			make-ssl-cert generate-default-snakeoil --force-overwrite
 			cp /etc/ssl/certs/ssl-cert-snakeoil.pem    "$NGINX_CONF_PATH/ssl/nginx.pem"

@@ -9,7 +9,7 @@ function add_user
 
 
 	if [ "$ADMIN" = "1" ] ; then
-		aptitude -y install sudo
+		aptitude install -y sudo
 		admin_exists=$(grep "^admin:" /etc/group)
 		if [ -z "$admin_exists" ] ; then
 			groupadd admin
