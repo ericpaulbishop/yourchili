@@ -6,9 +6,10 @@
 
 function initialize_mail_server
 {
-	local TEST_USER_DOMAIN="$1"
-	local TEST_USER_PASS="$2"
-	local PORT_587_ENABLED="$3"
+	local TEST_USER_NAME="$1"
+	local TEST_USER_DOMAIN="$2"
+	local TEST_USER_PASS="$3"
+	local PORT_587_ENABLED="$4"
 
 	upgrade_system
 
@@ -238,7 +239,7 @@ EOF
 	touch /etc/dovecot/users
 	chmod 640 /etc/dovecot/users /etc/dovecot/passwd
 	
-	/usr/sbin/add_dovecot_user "test_user@$TEST_USER_DOMAIN" "$TEST_USER_PASS"
+	/usr/sbin/add_dovecot_user "$TEST_USER_NAME@$TEST_USER_DOMAIN" "$TEST_USER_PASS"
 	
 	
 	#set ports smtp server will run on
@@ -289,7 +290,7 @@ function restore_mail_config
 	local BACKUP_DIR="$1"
 
 	if [ ! -e /srv/mail ] ; then
-		initialize_mail_server "dummy.com" "dummy_pass" "0" "1"
+		initialize_mail_server "dummy_user" "dummy.com" "dummy_pass" "1"
 	fi
 
 	if [ -e "$BACKUP_DIR/mail_backup.tar.bz2" ] ; then
