@@ -1,7 +1,7 @@
 #!/bin/bash
 
-. ./library/redcloud.sh
-
+./install.sh
+source /usr/local/lib/redcloud/redcloud.sh
 
 HOSTNAME="mysite.com"
 DB_PASSWORD="password"
@@ -23,9 +23,10 @@ upgrade_system
 better_bash_prompt 1
 
 #set hostname and allowed ports
-#port 22=ssh; 80,443=http,https; 25,110,587=email; 
+#port 22=ssh; 80,443=http,https; 25,110,587=email; 9418=git
 set_hostname "$HOSTNAME"
-set_open_ports 22 80 443 25 110 587
+set_open_ports 22 80 443 25 110 587 9418 
+
 
 # Add an admin user
 # Last arg indicates that this is an admin
