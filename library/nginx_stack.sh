@@ -318,7 +318,7 @@ function nginx_add_passenger_uri_for_vhost
 	enabled_line=$(grep -P "^[\t #]*passenger_enabled[\t ]+" "$VHOST_CONFIG_FILE")
 	if [ -n "$enabled_line" ] ; then
 		
-		cat   "$VHOST_CONFIG_FILE.tmp" | sed -e "s/passenger_enabled.*$/passenger_enabled   on;${NL}${TAB}passenger_base_uri  $escaped_uri;/g"  > "$VHOST_CONFIG_FILE"
+		cat   "$VHOST_CONFIG_FILE.tmp" | sed -e "s/^.*passenger_enabled.*$/${TAB}passenger_enabled   on;${NL}${TAB}passenger_base_uri  $escaped_uri;/g"  > "$VHOST_CONFIG_FILE"
 	else
 		cat   "$VHOST_CONFIG_FILE.tmp" | sed -e "s/^{$/{${NL}${TAB}passenger_enabled   on;${NL}${TAB}passenger_base_uri  $escaped_uri;/g"  > "$VHOST_CONFIG_FILE"
 	fi
