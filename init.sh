@@ -15,6 +15,10 @@ USER_FIRST_NAME="The"
 USER_LAST_NAME="Librarian"
 USER_EMAIL="librarian@uu.edu.am"
 
+BACKUP_DIR="/backups" #directory where we store backups
+
+
+
 #updates packages to latest versions
 upgrade_system
 
@@ -139,8 +143,8 @@ initialize_mail_server "$USER" "mysite.com" "$USER_PW" 1
 # 1) email address
 # 2) password
 
-/usr/sbin/add_dovecot_user "mridcully@mysite.com" "wowwowsauce"
-/usr/sbin/add_dovecot_user "rincewind@mysite.com" "runrunrun"
+/usr/sbin/add_dovecot_user "mridcully@mysite.com"        "wowwowsauce"
+/usr/sbin/add_dovecot_user "rincewind@mysite.com"        "runrunrun"
 /usr/sbin/add_dovecot_user "deanhenry@thatothersite.com" "borntorune"
 
 
@@ -151,7 +155,7 @@ initialize_mail_server "$USER" "mysite.com" "$USER_PW" 1
 # 1) The root database password
 # 2) the directory to save backups to
 #
-setup_backup_cronjob "$DB_PASSWORD" "/backups"
+setup_backup_cronjob "$DB_PASSWORD" "$BACKUP_DIR"
 
 
 
