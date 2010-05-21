@@ -212,7 +212,11 @@ auth default {
 
 }
 EOF
-	
+	if [ -e /etc/dovecot/dovecot-postfix.conf ] ; then
+		cp /etc/dovecot/dovecot.conf /etc/dovecot/dovecot-postfix.conf
+	fi
+
+
 	cat <<'EOF' >/usr/sbin/add_dovecot_user
 #!/bin/sh
 if [ -z "$1" ] ; then
