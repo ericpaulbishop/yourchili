@@ -22,7 +22,7 @@ function initialize_mail_server
 	echo "postfix_2.6.5 postfix/destinations     string localhost" | debconf-set-selections
 	echo "postfix_2.6.5 postfix/mailname         string localhost" | debconf-set-selections
 	echo "postfix_2.6.5 postfix/main_mailer_type select Internet Site" | debconf-set-selections
-	aptitude install -y postfix mailx dovecot-common dovecot-imapd dovecot-pop3d whois sasl2-bin
+	aptitude install -y postfix mailx dovecot-common dovecot-imapd dovecot-pop3d whois sasl2-bin mkpasswd
 	
 	postconf -e "mailbox_command = "
 	postconf -e "home_mailbox = Maildir/"
@@ -250,7 +250,12 @@ EOF
 	fi
 	mv /etc/postfix/master.cf.tmp /etc/postfix/master.cf
 	
-	
+
+	mkdir -p /etc/ssl/private/
+	mkdir -p /etc/ssl/certs
+	cp /etc/postfix/ssl/smtp_cert.pem /etc/ssl/certs/dovecot.pem
+	cp /etc/postfix/ssl/smtp_cert_key.pem /etc/ssl/private/dovecot.pem
+
 	#restart
 	/etc/init.d/saslauthd restart
 	/etc/init.d/dovecot restart
