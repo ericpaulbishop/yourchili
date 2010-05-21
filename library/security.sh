@@ -15,7 +15,7 @@ function set_open_ports
 	mv /etc/fail2ban/jail.conf.tmp /etc/fail2ban/jail.conf 
 
 	#reset, removing all old rules
-	ufw reset
+	printf "y\ny\ny\n" | ufw reset
 
 	#always allow ssh
 	ufw default deny
@@ -29,6 +29,6 @@ function set_open_ports
 	
 	#enable firewall
 	ufw logging on 
-	ufw enable
+	printf "y\ny\ny\n" | ufw enable
 }
 
