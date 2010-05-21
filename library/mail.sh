@@ -28,7 +28,7 @@ function initialize_mail_server
 	postconf -e "mailbox_command = "
 	postconf -e "home_mailbox = Maildir/"
 	postconf -e "inet_interfaces = all"
-	postconf -e "myhostname = localhost"
+	postconf -e "myhostname = $TEST_USER_DOMAIN"
 	
 	postconf -e "virtual_mailbox_domains = /etc/postfix/vhosts"
 	postconf -e "virtual_mailbox_base = /srv/mail"
