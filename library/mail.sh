@@ -49,7 +49,17 @@ function initialize_mail_server
 	postconf -e "smtpd_tls_session_cache_timeout = 3600s"
 	postconf -e "tls_random_source = dev:/dev/urandom"
 	
-	
+
+	postconf -e "smtpd_sasl_auth_enable = yes"
+	postconf -e "smtpd_sasl_authenticated_header = no"
+	postconf -e "smtpd_sasl_exceptions_networks = "
+	postconf -e "smtpd_sasl_local_domain = "
+	postconf -e "smtpd_sasl_security_options = noanonymous"
+	postconf -e 'smtpd_sasl_tls_security_options = $smtpd_sasl_security_options'
+	postconf -e "smtpd_sasl_type = dovecot"
+	postconf -e "smtpd_sasl_path = private/auth-dovecot"
+	postconf -e "smtpd_recipient_restrictions = permit_sasl_authenticated, permit_mynetworks, reject_unauth_destination"
+
 	
 	#configure tls
 	local curdir=$(pwd)
@@ -193,7 +203,7 @@ auth default {
   user = root
   socket listen {
     client {
-      path = /var/spool/postfix/private/auth-postfix
+      path = /var/spool/postfix/private/auth-dovecot
       mode = 0660
       user = postfix
       group = postfix
