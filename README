@@ -1,0 +1,39 @@
+Redcloud is a bash script library for deploying Redmine in a Cloud / VPS hosting environment with Nginx and Passenger.  It has been tested with Ubuntu 9.10 and 10.04.
+
+One of the primary problems of deploying Redmine is integrating repository hosting with Redmine.  There are many ways of hosting a SVN or Git repository so that they work with Redmine, and this variability can make deployment less than straightforward.  Redcloud provides a very specific structure for repository hosting and Redmine integration, so that it is easy to deploy multiple or single repository Redmine configurations.  Additionally, multiple Redmine installations can be configured for different virtual hosts.  Both Git and SVN are supported, but other version control systems are not.
+
+It is strongly suggested that you install PHP-fpm along with Nginx (it's just an extra variable to the nginx install function), unless you are sure you won't ever want to host a PHP site from this machine.  However, be aware that installing this may take a significant amount of extra time (20-30 minutes) to compile.
+
+The library also includes functions for upgrading the system, setting an improved colored bash prompt, adding system users, setting up a mail server, configuring periodic backups, restoring from backups and configuring a simple firewall (ufw).  
+
+A significant portion of this library was derived from Linode Stack Script libraries.  In particular code from the official StackScript Bash Library and the LEMP_lib library by rnolen was used.  Redcloud is licensed under GPL v2, users but must also observe the BSD license on this code carried by the Linode script.  For full license text see LICENSE.txt file.
+
+Redcloud sets up a directory structure under /srv as follows:
+/srv/www					The root directory for the web server
+/srv/www/[virtual_host_name]/public_html/	This is the root directory for each virtual host
+/srv/projects/redmine				This directory contains redmine installations
+/srv/projects/git				This directory is the git user home directory (for gitosis). 
+/srv/projects/git/repositories			This is where the actual git repositories are located
+/srv/projects/git/grack				Grack is a rails app that provides "Smart Http" access for Git
+/srv/projects/svn				This directory contains Subversion repositories
+/srv/mail/					Root location of virtual mailboxes if you configure a mail server
+
+Nginx configuration files can be found at:
+/etc/nginx
+
+Subversion support requires apache installation for DAV support, while Git can be hosted with Nginx only.  In the case of SVN Nginx acts as a reverse proxy.
+
+When rails apps are activated a symlink is created from the relevant directory to somewhere under the virtual host directory.
+
+For every virtual host https access for version control and Redmine is configured, via a self-signed certificate located in:
+/etc/nginx/ssl
+
+Be warned this is a self-signed certificate, which means browsers/svn/git will initially complain about authenticity.  However, it allows access to Redmine/Git/Svn without sending a password in clear-text.
+
+The install.sh script installs the Redcloud library to /usr/local/lib/redcloud by default.  Then, to use redcloud, you can just source /usr/local/lib/redcloud/redmine.sh
+
+For an example script for configuring a Redmine setup see the init.sh script.  This is a heavily-commented script which can be run to configure a system.
+
+The restore.sh script is another heavily commented example script that illustrates how to restore a system from a backup performed by Redcloud.
+
+
