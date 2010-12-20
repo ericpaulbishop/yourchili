@@ -56,6 +56,9 @@ function php_fpm_install
 
 	#grab php.
 	wget "http://us.php.net/get/php-$PHP_VER.tar.bz2/from/us.php.net/mirror"
+	if [ ! -f "php-$PHP_VER.tar.bz2" ] ; then
+		wget "http://museum.php.net/php5/php-$PHP_VER.tar.bz2"
+	fi
 	tar -xjvf "php-$PHP_VER.tar.bz2"
 
 	#grab suhosin.
@@ -99,6 +102,7 @@ function php_fpm_install
 	cd "php-fpm-$PHP_FPM_VER-$PHP_VER_IND"
 	cd fpm-build
 	make install
+
 
 	#grab and install suhosin extension.
 	cd ../../../../
