@@ -514,3 +514,28 @@ EOF
 }
 
 
+
+#################################################################################
+# Utility function for generating SSL key & certificate signing request (.csr)  #
+# Useful if you need authenticated HTTPS                                        #
+# key and csr files are generated in current working directory                  #
+# old key and csr files are removed                                             #
+#################################################################################
+
+function gen_ssl_key_and_request
+{
+	local country="$1"       # 2 letter code,                     e.g. "US"
+	local state="$2"         # Full name of state/province,       e.g. "Rhode Island"
+	local city="$3"          # Full city name,                    e.g. "Providence"
+	local organization="$4"  # Your full organization name,       e.g. "Diane's Dildo Emporium LLC"
+	local org_unit="$5"      # Organizational unit, can be blank  e.g. "Web Services"
+	local site_name="$6"     # Full domain name                   e.g. "www.dianesdildos.com"
+	local email="$7"         # Contact email address              e.g. "dirtydiane@dianesdildos.com"
+	local valid_time="$8"    # Number of days cert will be valid  e.g. "365" (for one year)
+
+	rm -rf "$site_name.key" "$site_name.csr"
+	printf "$country\n$state\n$city\n$organization\n$org_unit\n$site_name\n$email\n\n\n\n\n\n" | openssl req -new -days "$valid_time" -nodes -newkey rsa:2048 -keyout "$site_name.key" -out "$site_name.csr"
+
+}
+
+
