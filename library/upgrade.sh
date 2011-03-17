@@ -201,7 +201,7 @@ function better_stuff
 
 function upgrade_system
 {
-	cat /etc/apt/sources.list | sed 's/^#*deb/deb/g' >/tmp/new_src_list.tmp
+	cat /etc/apt/sources.list | sed 's/^#*deb/deb/g' | grep -v "cdrom" >/tmp/new_src_list.tmp
 	mv /tmp/new_src_list.tmp /etc/apt/sources.list
 	
 	apt-get install -y aptitude >/dev/null 2>&1
