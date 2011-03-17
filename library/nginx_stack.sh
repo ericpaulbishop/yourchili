@@ -31,17 +31,18 @@ function php_fpm_install
 	sed -i 's/listen = 127.0.0.1:9000/listen = \/var\/run\/php5-fpm.sock/' /etc/php5/fpm/php5-fpm.conf
 	
 	#nice strict permissions
-	sed -i 's/;listen.owner = www-data/listen.owner = '"$PHP_FPM_USER"'/'  /etc/php5/fpm/php5-fpm.conf
-	sed -i 's/;listen.group = www-data/listen.group = '"$PHP_FPM_GROUP"'/' /etc/php5/fpm/php5-fpm.conf
-	sed -i 's/;listen.mode = 0666/listen.mode = 0600/' /etc/php5/fpm/php5-fpm.conf
+	php_fpm_conf_file=`grep -R "^listen.*=.*127" /etc/php5/fpm/* | sed 's/:.*$//g' | uniq | head -n 1`
+	sed -i 's/;listen.owner = www-data/listen.owner = '"$PHP_FPM_USER"'/'  $php_fpm_conf_file
+	sed -i 's/;listen.group = www-data/listen.group = '"$PHP_FPM_GROUP"'/' $php_fpm_conf_file
+	sed -i 's/;listen.mode = 0666/listen.mode = 0600/'                     $php_fpm_conf_file
+
 	
 	#these settings are fairly conservative and can probably be increased without things melting
-	sed -i 's/pm.max_children = 50/pm.max_children = 12/' /etc/php5/fpm/php5-fpm.conf
-	sed -i 's/pm.start_servers = 20/pm.start_servers = 4/' /etc/php5/fpm/php5-fpm.conf
-	sed -i 's/pm.min_spare_servers = 5/pm.min_spare_servers = 2/' /etc/php5/fpm/php5-fpm.conf
-	sed -i 's/pm.max_spare_servers = 35/pm.max_spare_servers = 4/' /etc/php5/fpm/php5-fpm.conf
-	sed -i 's/pm.max_requests = 0/pm.max_requests = 500/' /etc/php5/fpm/php5-fpm.conf
-
+	sed -i 's/pm.max_children = 50/pm.max_children = 12/'           $php_fpm_conf_file
+	sed -i 's/pm.start_servers = 20/pm.start_servers = 4/'          $php_fpm_conf_file
+	sed -i 's/pm.min_spare_servers = 5/pm.min_spare_servers = 2/'   $php_fpm_conf_file
+	sed -i 's/pm.max_spare_servers = 35/pm.max_spare_servers = 4/'  $php_fpm_conf_file
+	sed -i 's/pm.max_requests = 0/pm.max_requests = 500/'           $php_fpm_conf_file
 
  
 	#Engage.
