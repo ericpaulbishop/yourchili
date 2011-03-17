@@ -22,6 +22,7 @@ function php_fpm_install
 
 
 	#installing only the basics.
+	mkdir -p /var/www  #required to install php5-fpm -- it's a bug in Ubuntu
 	aptitude install -y php5-fpm php5-mysql php5
  
 	#php5-fpm conf
