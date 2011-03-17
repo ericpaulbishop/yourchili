@@ -25,5 +25,6 @@ source "$REDCLOUD_INSTALL_DIR/redmine.sh"
 source "$REDCLOUD_INSTALL_DIR/site_backup_and_restore.sh"
 source "$REDCLOUD_INSTALL_DIR/mail.sh"
 source "$REDCLOUD_INSTALL_DIR/backup_cronjob.sh"
+source "$REDCLOUD_INSTALL_DIR/wordpress.sh"
 
 
