@@ -203,6 +203,8 @@ function upgrade_system
 {
 	cat /etc/apt/sources.list | sed 's/^#*deb/deb/g' >/tmp/new_src_list.tmp
 	mv /tmp/new_src_list.tmp /etc/apt/sources.list
+	
+	apt-get install -y aptitude >/dev/null 2>&1
 	aptitude update
 	aptitude -y full-upgrade #only sissies use safe-upgrade. ARE YOU A SISSY?
 	

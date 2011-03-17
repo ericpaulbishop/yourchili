@@ -20,130 +20,31 @@ function php_fpm_install
 	local PHP_FPM_USER="$1"
 	local PHP_FPM_GROUP="$2"
 
-	#check for versions of: libevent; php-fpm; php; suhosin; suhosin patch.
-	#the naming conventions php-fpm have changed at random in the past. be careful.
-	#
-	# http://monkey.org/~provos/libevent/
-	# http://launchpad.net/php-fpm/
-	# http://php.net/
-	# http://www.hardened-php.net/suhosin/download.html
-	#
-	#and alter variables as necessary
 
-	local curdir=$(pwd)
-	
-	#dependencies for all the crap to be included with php
-	aptitude install -y libcurl4-openssl-dev libjpeg62-dev libpng12-dev libxpm-dev libfreetype6-dev libt1-dev libmcrypt-dev libxslt1-dev libbz2-dev libxml2-dev
-
-	#not php specific deps
-	aptitude install -y wget build-essential autoconf
-
-	#create directory to play in
-	mkdir /tmp/phpcrap
-	cd /tmp/phpcrap
-
-	#need stable libevent.
-	wget "http://www.monkey.org/~provos/libevent-$LIBEVENT_VER.tar.gz"
-	tar -xzvf "libevent-$LIBEVENT_VER.tar.gz"
-	cd "libevent-$LIBEVENT_VER"
-	./configure
-	make
-	DESTDIR=$PWD make install
-	export LIBEVENT_SEARCH_PATH="$PWD/usr/local"
-
-	#don't want to build in libevent directory
-	cd ../
-
-	#grab php.
-	wget "http://us.php.net/get/php-$PHP_VER.tar.bz2/from/us.php.net/mirror"
-	if [ ! -f "php-$PHP_VER.tar.bz2" ] ; then
-		wget "http://museum.php.net/php5/php-$PHP_VER.tar.bz2"
-	fi
-	tar -xjvf "php-$PHP_VER.tar.bz2"
-
-	#grab suhosin.
-	wget "http://download.suhosin.org/suhosin-patch-$PHP_VER-$SUHOSIN_PATCH_VER.patch.gz"
-	gunzip "suhosin-patch-$PHP_VER-$SUHOSIN_PATCH_VER.patch.gz"
-
-	#patch php with suhosin.
-	cd "php-$PHP_VER"
-	patch -p 1 -i "../suhosin-patch-$PHP_VER-$SUHOSIN_PATCH_VER.patch"
-
-	#build php
-	mkdir php-build
-	cd php-build
-	../configure --with-config-file-path=/usr/local/lib/php --with-curl --enable-exif --with-gd --with-jpeg-dir --with-png-dir --with-zlib --with-xpm-dir --with-freetype-dir --with-t1lib --with-mcrypt --with-mhash --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-mysql-sock=/var/run/mysqld/mysqld.sock --with-openssl --enable-sysvmsg --enable-wddx --with-xsl --enable-zip --with-bz2 --enable-bcmath --enable-calendar --enable-ftp --enable-mbstring --enable-soap --enable-sockets --enable-sqlite-utf8 --with-gettext --enable-shmop --with-xmlrpc
-	make
-
-	#grab php-fpm and build
-	wget "http://launchpad.net/php-fpm/master/$PHP_FPM_VER/+download/php-fpm-$PHP_FPM_VER~$PHP_VER_IND.tar.gz"
-	tar -xzvf "php-fpm-$PHP_FPM_VER~$PHP_VER_IND.tar.gz"
-	cd "php-fpm-$PHP_FPM_VER-$PHP_VER_IND"
-	mkdir fpm-build
-	cd fpm-build
-	../configure --srcdir=../ --with-php-src="../../../" --with-php-build="../../" --with-libevent="$LIBEVENT_SEARCH_PATH" --with-fpm-bin=/usr/local/sbin/php-fpm  --with-fpm-init=/etc/init.d/php-fpm --with-fpm-user="$PHP_FPM_USER" --with-fpm-group="$PHP_FPM_GROUP"
-	make
-
-	#install php
-	cd ../../
-	make install
-
-	#move php.ini to where php-fpm looks for it
-	cp "/tmp/phpcrap/php-$PHP_VER/php.ini-production" /usr/local/lib/php/php.ini
-
-	#set default timezone to UTC to avoid errors from php date functions
-	sed -i -e 's/^;date\.timezone.*$/date\.timezone = "UTC"/g' /usr/local/lib/php/php.ini
-
-
-	#set permissions
-	chmod 644 /usr/local/lib/php/php.ini
-
-	#install php-fpm
-	cd "php-fpm-$PHP_FPM_VER-$PHP_VER_IND"
-	cd fpm-build
-	make install
-
-
-	#grab and install suhosin extension.
-	cd ../../../../
-	wget "http://download.suhosin.org/suhosin-$SUHOSIN_VER.tgz"
-	tar -xzvf "suhosin-$SUHOSIN_VER.tgz"
-	cd "suhosin-$SUHOSIN_VER"
-	/usr/local/bin/phpize
-	./configure
-	make
-	make install
-
-	#make php use it.
-	echo "extension = suhosin.so" >> /usr/local/lib/php/php.ini
-
-	#have /etc/init.d/php-fpm run on boot
-	update-rc.d php-fpm defaults
-
-	#/etc/php-fpm.conf stuff
+	#installing only the basics.
+	aptitude install -y php5-fpm php5-mysql php5
+ 
+	#php5-fpm conf
+ 
 	#sockets > ports. Using the 127.0.0.1:9000 stuff needlessly introduces TCP/IP overhead.
-	sed -i 's/<value\ name="listen_address">127.0.0.1:9000<\/value>/<value\ name="listen_address">\/var\/run\/php-fpm.sock<\/value>/' /etc/php-fpm.conf
+	sed -i 's/listen = 127.0.0.1:9000/listen = \/var\/run\/php5-fpm.sock/' /etc/php5/fpm/php5-fpm.conf
 	
 	#nice strict permissions
-	sed -i 's/<value\ name="mode">0666<\/value>/<value\ name="mode">0600<\/value>/' /etc/php-fpm.conf
+	sed -i 's/;listen.owner = www-data/listen.owner = '"$PHP_FPM_USER"'/'  /etc/php5/fpm/php5-fpm.conf
+	sed -i 's/;listen.group = www-data/listen.group = '"$PHP_FPM_GROUP"'/' /etc/php5/fpm/php5-fpm.conf
+	sed -i 's/;listen.mode = 0666/listen.mode = 0600/' /etc/php5/fpm/php5-fpm.conf
 	
-	#matches available processors. Will not make a 360 melt.
-	sed -i 's/<value\ name="max_children">5<\/value>/<value\ name="max_children">4<\/value>/' /etc/php-fpm.conf
-	
-	#i like to know when scripts are slow.
-	sed -i 's/<value\ name="request_slowlog_timeout">0s<\/value>/<value name="request_slowlog_timeout">2s<\/value>/' /etc/php-fpm.conf
+	#these settings are fairly conservative and can probably be increased without things melting
+	sed -i 's/pm.max_children = 50/pm.max_children = 12/' /etc/php5/fpm/php5-fpm.conf
+	sed -i 's/pm.start_servers = 20/pm.start_servers = 4/' /etc/php5/fpm/php5-fpm.conf
+	sed -i 's/pm.min_spare_servers = 5/pm.min_spare_servers = 2/' /etc/php5/fpm/php5-fpm.conf
+	sed -i 's/pm.max_spare_servers = 35/pm.max_spare_servers = 4/' /etc/php5/fpm/php5-fpm.conf
+	sed -i 's/pm.max_requests = 0/pm.max_requests = 500/' /etc/php5/fpm/php5-fpm.conf
 
-	#edited to include PHP path
-	sed -i 's/<value\ name="PATH">\/usr\/local\/bin:\/usr\/bin:\/bin<\/value>/<value\ name="PATH">\/usr\/local\/bin:\/usr\/bin:\/bin:\/usr\/local\/sbin<\/value>/' /etc/php-fpm.conf
 
+ 
 	#Engage.
-        /etc/init.d/php-fpm start
-
-	cd "$curdir"
-
-	#remove build crap
-	rm -rf /tmp/phpcrap
-
+	/etc/init.d/php5-fpm start
 }
 
 ######################

@@ -11,7 +11,7 @@ export PHP_VER_IND=5.3.1
 
 export RUBY_PREFIX="/usr/local/ruby"
 
-export NGINX_VER=0.7.65
+export NGINX_VER=0.8.54
 export NGINX_PREFIX="/srv/www"
 export NGINX_SBIN_PATH="/usr/local/sbin/nginx"
 export NGINX_CONF_PATH="/etc/nginx"
