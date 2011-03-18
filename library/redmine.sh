@@ -43,7 +43,7 @@ function create_redmine_project
 	git clone https://github.com/edavis10/redmine.git
 	mv redmine "$REDMINE_ID"
 	cd "$REDMINE_ID"
-	git checkout "0.9-stable"
+	git checkout "1.1-stable"
 	rm -rf .git
 
 	cat << EOF >config/database.yml
