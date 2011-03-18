@@ -73,7 +73,7 @@ function ruby_install
 	done
 
 	gem install mysql
-	gem install rails
+	gem install rails --version 3.0.5
 
 	#necessary for redmine grack auth
 	gem install dbi
