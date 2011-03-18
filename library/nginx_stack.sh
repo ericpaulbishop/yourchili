@@ -26,12 +26,12 @@ function php_fpm_install
 	aptitude install -y php5-fpm php5-mysql php5
  
 	#php5-fpm conf
+	php_fpm_conf_file=`grep -R "^listen.*=.*127" /etc/php5/fpm/* | sed 's/:.*$//g' | uniq | head -n 1`
  
 	#sockets > ports. Using the 127.0.0.1:9000 stuff needlessly introduces TCP/IP overhead.
-	sed -i 's/listen = 127.0.0.1:9000/listen = \/var\/run\/php5-fpm.sock/' /etc/php5/fpm/php5-fpm.conf
+	sed -i 's/listen = 127.0.0.1:9000/listen = \/var\/run\/php5-fpm.sock/' $php_fpm_conf_file
 	
 	#nice strict permissions
-	php_fpm_conf_file=`grep -R "^listen.*=.*127" /etc/php5/fpm/* | sed 's/:.*$//g' | uniq | head -n 1`
 	sed -i 's/;listen.owner = www-data/listen.owner = '"$PHP_FPM_USER"'/'  $php_fpm_conf_file
 	sed -i 's/;listen.group = www-data/listen.group = '"$PHP_FPM_GROUP"'/' $php_fpm_conf_file
 	sed -i 's/;listen.mode = 0666/listen.mode = 0600/'                     $php_fpm_conf_file
