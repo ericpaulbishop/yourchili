@@ -83,7 +83,7 @@ sub daemonize() {
 }
 
 sub main {
-        $socket = FCGI::OpenSocket( "/var/run/perl-fastcgi.sock", 25 );
+        $socket = FCGI::OpenSocket( "/var/run/perl-fastcgi/perl-fastcgi.sock", 25 );
         $request = FCGI::Request( \*STDIN, \*STDOUT, \*STDERR, \%req_params, $socket );
         if ($request) { request_loop()};
             FCGI::CloseSocket( $socket );
@@ -155,22 +155,30 @@ sub request_loop {
 }
 EOF
 
-	cat << 'EOF' /etc/init.d/perl-fastcgi
+	cat << 'EOF' >/etc/init.d/perl-fastcgi
 #!/bin/bash
 PERL_SCRIPT=/usr/bin/perl-fastcgi
 FASTCGI_USER=www-data
+SOCKET_DIR=/var/run/perl-fastcgi
 RETVAL=0
 case "$1" in
     start)
+      mkdir -p $SOCKET_DIR >/dev/null 2>&1
+      rm -rf $SOCKET_DIR/*  >/dev/null 2>&1
+      chown $FASTCGI_USER $SOCKET_DIR  >/dev/null 2>&1
       su - $FASTCGI_USER -c $PERL_SCRIPT
       RETVAL=$?
   ;;
     stop)
       killall -9 perl-fastcgi
+      rm -rf $SOCKET_DIR/*
       RETVAL=$?
   ;;
     restart)
-      killall -9 fastcgi-wrapper.pl
+      killall -9 fastcgi-wrapper.pl >/dev/null 2>&1
+      mkdir -p $SOCKET_DIR >/dev/null 2>&1
+      rm -rf $SOCKET_DIR/*  >/dev/null 2>&1
+      chown $FASTCGI_USER $SOCKET_DIR  >/dev/null 2>&1
       su - $FASTCGI_USER -c $PERL_SCRIPT
       RETVAL=$?
   ;;
@@ -313,7 +321,7 @@ EOF
 	${perl_comment}#perl
 	${perl_comment}location ~ \.pl\$
 	${perl_comment}{
-	${perl_comment}	fastcgi_pass   unix:/var/run/perl-fastcgi.sock ;
+	${perl_comment}	fastcgi_pass   unix:/var/run/perl-fastcgi/perl-fastcgi.sock ;
 	${perl_comment}	include        $NGINX_CONF_PATH/fastcgi_params;
 	${perl_comment}}
 
