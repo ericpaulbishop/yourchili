@@ -241,6 +241,7 @@ function nginx_create_site
 	local is_ssl="$3"
 	local rails_paths="$4"
 	local enable_php="$5"
+	local enable_perl="$6"
 
 	port="80"
 	ssl_cert=""
@@ -292,9 +293,14 @@ EOF
 	fi
 
 	local php_comment=""
-	if [ "$php_enabled" == '0' ] ; then
+	local perl_comment=""
+	if [ "$enable_php" == '0' ] ; then
 		php_comment="#"
 	fi
+	if [ "$enable_perl" == '0' ] ; then
+		perl_comment="#"
+	fi
+
 	cat << EOF >>"$config_path"
 
 	${php_comment}#php
@@ -303,6 +309,14 @@ EOF
 	${php_comment}	fastcgi_pass   unix:/var/run/php-fpm.sock ;
 	${php_comment}	include        $NGINX_CONF_PATH/fastcgi_params;
 	${php_comment}}
+
+	${perl_comment}#perl
+	${perl_comment}location ~ \.pl\$
+	${perl_comment}{
+	${perl_comment}	fastcgi_pass   unix:/var/run/pperl-fastcgi.sock ;
+	${perl_comment}	include        $NGINX_CONF_PATH/fastcgi_params;
+	${perl_comment}}
+
 EOF
 
 	echo "}" >> "$config_path"
@@ -410,6 +424,7 @@ function nginx_install
 	local NGINX_GROUP="$2"
 	local NGINX_USE_PHP="$3"
 	local NGINX_USE_PASSENGER="$4"
+	local NGINX_USE_PERL="$5"
 
 	if [ -z "$NGINX_USE_PHP" ] ; then
 		NGINX_USE_PHP=1
@@ -423,6 +438,9 @@ function nginx_install
 	fi
 	if [ "$NGINX_USE_PASSENGER" = 1 ] ; then
 		ruby_install
+	fi
+	if [ "$NGINX_USE_PERL" = 1 ] ; then
+		perl_fcgi_install
 	fi
 
 
@@ -515,9 +533,9 @@ http
 
 	${pass_comment}passenger_root                   $passenger_root;
 	${pass_comment}passenger_ruby                   $RUBY_PREFIX/bin/ruby;
-	${pass_comment}passenger_max_pool_size          1;
-	${pass_comment}passenger_pool_idle_time         1;
-	${pass_comment}passenger_max_instances_per_app  1;
+	${pass_comment}passenger_max_pool_size          3;
+	${pass_comment}passenger_pool_idle_time         0;
+	${pass_comment}passenger_max_instances_per_app  3;
 		
 
 	#proxy settings (only relevant when nginx used as a proxy)
@@ -541,8 +559,8 @@ EOF
 	mkdir -p "$NGINX_CONF_PATH/sites-available"
 
 	#create default site & start nginx
-	nginx_create_site "default" "localhost" "0" "" "$NGINX_USE_PHP"
-	nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "" "$NGINX_USE_PHP"
+	nginx_create_site "default" "localhost" "0" "" "$NGINX_USE_PHP" "$NGINX_USE_PERL"
+	nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "" "$NGINX_USE_PHP" "$NGINX_USE_PERL"
 
 	nginx_ensite      "default"
 	nginx_ensite      "$NGINX_SSL_ID"
