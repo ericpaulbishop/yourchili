@@ -313,7 +313,7 @@ EOF
 	${perl_comment}#perl
 	${perl_comment}location ~ \.pl\$
 	${perl_comment}{
-	${perl_comment}	fastcgi_pass   unix:/var/run/pperl-fastcgi.sock ;
+	${perl_comment}	fastcgi_pass   unix:/var/run/perl-fastcgi.sock ;
 	${perl_comment}	include        $NGINX_CONF_PATH/fastcgi_params;
 	${perl_comment}}
 
