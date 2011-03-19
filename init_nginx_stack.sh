@@ -40,8 +40,8 @@ add_user "$USER" "$USER_PW" "1"
 mysql_install "$DB_PASSWORD"
 mysql_tune 30
 
-#install nginx, along with both passenger(ruby) and php
-nginx_install "$NGINX_USER" "$NGINX_GROUP" "1" "1"
+#install nginx, along with both passenger(ruby), php and perl
+nginx_install "$NGINX_USER" "$NGINX_GROUP" "1" "1" "1"
 
 
 
