@@ -4,36 +4,20 @@
 function better_wordpress_install
 {
 	# installs the latest wordpress tarball from wordpress.org
-
-	# $1 - required - The existing virtualhost to install into
-	# $2 - required - The wordpress username, which will also be database name
-	# $3 - required - The database password
-
-	if [ ! -n "$3" ]; then
-		echo "better_wordpress_install() requires the root database password as its first argument"
-		return 1;
-	fi
-
-	if [ ! -n "$1" ]; then
-		echo "better_wordpress_install() requires the vitualhost as its second argument"
-		return 1;
-	fi
-	if [ ! -n "$2" ]; then
-		echo "better_wordpress_install() requires the Wordpress username as its second argument"
-		return 1;
-	fi
-	if [ ! -n "$3" ]; then
-		echo "better_wordpress_install() requires the Wordpress password as its third argument"
-		return 1;
-	fi
-
-
+	# root db pass = $1
+	# VPATH = $2
+	# Wordpress User = $3
+	# Wordpress Pass = $4
 
 
 	DB_PASSWORD="$1"
 	VPATH=$(cat "/etc/nginx/sites-available/$2" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
 	WP_USER="$3"
-	WP_PW="$4"
+	WP_PASS="$4"
+
+	echo "WP_PASS = $4";
+	
+
 
 	if [ ! -n "$VPATH" ]; then
 		echo "Could not determine DocumentRoot for $1"
