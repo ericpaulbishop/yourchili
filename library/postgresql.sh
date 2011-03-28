@@ -22,7 +22,7 @@ function postgresql_tune
 	PGMEM=$((TOTMEM*PERCENT/100)) # how much memory we'd like to tune pgsql with
 
 	pg_conf=$(find /etc/ -name "postgresql.conf" | head -n 1)
-	sed -i -e 's/^.*shared_buffers.*$/shared_buffers = '$PGMEM'MB/g'
+	sed -i -e 's/^.*shared_buffers.*$/shared_buffers = '$PGMEM'MB/g' $pg_conf
 }
 
 function postgresql_create_user
