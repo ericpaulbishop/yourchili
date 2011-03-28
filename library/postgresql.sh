@@ -1,10 +1,12 @@
 #!/bin/bash
 
+
 function postgresql_install
 {
 	aptitude -y install postgresql postgresql-contrib postgresql-dev postgresql-client libpq-dev
 	pg_conf=$(find /etc/ -name "pg_hba.conf" | head -n 1)
 	sed -i -e  's/^.*local.*all.*all.*$/local\tall\tall\tmd5/g'  $pg_conf
+	/etc/init.d/postgresql restart
 }
 
 function postgresql_tune
@@ -23,6 +25,7 @@ function postgresql_tune
 
 	pg_conf=$(find /etc/ -name "postgresql.conf" | head -n 1)
 	sed -i -e 's/^.*shared_buffers.*$/shared_buffers = '$PGMEM'MB/g' $pg_conf
+	/etc/init.d/postgresql restart
 }
 
 function postgresql_create_user
