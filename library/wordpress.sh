@@ -69,6 +69,8 @@ function better_wordpress_install
 
 	cd wp-admin
 	cat << 'EOF' >wpinst.php
+<?php
+
 
 define( 'WP_INSTALLING', true );
 
@@ -119,6 +121,7 @@ EOF
 $result = wp_install($weblog_title, $user_name, $admin_email, $public, '', $admin_password);
 extract( $result, EXTR_SKIP );
 
+?>
 EOF
 
 	php < wpinst.php
