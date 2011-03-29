@@ -23,7 +23,7 @@ function php_fpm_install
 
 	#installing only the basics.
 	mkdir -p /var/www  #required to install php5-fpm -- it's a bug in Ubuntu
-	aptitude install -y php5-fpm php5-mysql php5-pgsql php5
+	aptitude install -y php5-fpm php5-mysql php5-pgsql php5 php5-suhosin php5-cli php5-imagick imagemagick
  
 	#php5-fpm conf
 	php_fpm_conf_file=`grep -R "^listen.*=.*127" /etc/php5/fpm/* | sed 's/:.*$//g' | uniq | head -n 1`
