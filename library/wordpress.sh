@@ -29,11 +29,12 @@ function better_wordpress_install
 	fi
 
 	# download, extract, chown, and get our config file started
-	curdir=$(pwd)
+	local curdir=$(pwd)
+	local wp_ver_file="wordpress-3.1.tar.gz"
 	cd /tmp
-	wget "http://wordpress.org/latest.tar.gz"
-	tar xfz latest.tar.gz
-	rm -rf latest.tar.gz
+	wget "http://wordpress.org/$wp_ver_file"
+	tar xfz $wp_ver_file
+	rm -rf $wp_ver_file
 	rm -rf "$VPATH"
 	mv "wordpress" "$VPATH"
 	chown -R www-data "$VPATH"
@@ -42,7 +43,6 @@ function better_wordpress_install
 	cd "$VPATH"	
 	cp wp-config-sample.php wp-config.php
 	chown www-data wp-config.php
-	chmod 640 wp-config.php
 
 	# database configuration
 	db="${WP_USER}_wp"
@@ -51,19 +51,24 @@ function better_wordpress_install
 	mysql_grant_user "$DB_PASSWORD" "$db" "$db"
 
 	# configuration file updates
-	for i in {1..4}
+	for i in {1..8}
 		do sed -i "0,/put your unique phrase here/s/put your unique phrase here/$(randomString 50)/" wp-config.php
 	done
 
-	sed -i "s/putyourdbnamehere/$db/" wp-config.php
-	sed -i "s/usernamehere/$db/" wp-config.php
-	sed -i "s/yourpasswordhere/$db/" wp-config.php
+	
+	sed -i "s/database_name_here/$db/" wp-config.php
+	sed -i "s/username_here/$db/" wp-config.php
+	sed -i "s/password_here/$WP_PASS/" wp-config.php
 
 
 
+
+	chmod 640 wp-config.php
 	chown -R www-data *
 	chgrp -R www-data *
 
+	/etc/init.d/nginx restart
+	/etc/init.d/php5-fpm restart
 	
 	cd "$curdir"
 
