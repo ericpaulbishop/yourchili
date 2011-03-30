@@ -6,7 +6,7 @@ function better_wordpress_install
 	# installs the latest wordpress tarball from wordpress.org
 	#
 	# root db pass = $1
-	# VPATH = $2
+	# nginx site id = $2
 	# Wordpress User = $3
 	# Wordpress Pass = $4
 	# Wordpress Blog Title = $5
@@ -67,11 +67,25 @@ function better_wordpress_install
 	sed -i "s/password_here/$WP_PASS/" wp-config.php
 
 
+	local site_url=$(get_domain_for_site_id $VPATH)
+	if [ -z "$site_url" ] ; then
+		site_url=$(get_rdns)
+	fi
+	if [ -z "$site_url" ] ; then
+		site_url=$(system_ip)	
+	fi
+	if [ -z "$site_url" ] ; then
+		site_url="127.0.0.1"
+	fi
+	site_url="http://$site_url"
+
+
+
 	cd wp-admin
-	cat << 'EOF' >wpinst.php
-<?php
+	echo '<?php' >wpinst.php
+	echo "define( 'WP_SITEURL', '$site_url' );" >>wpinst.php
 
-
+	cat << 'EOF' >>wpinst.php
 define( 'WP_INSTALLING', true );
 
 /** Load WordPress Bootstrap */

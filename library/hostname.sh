@@ -63,4 +63,29 @@ function restore_hostname
 	fi
 }
 
+function system_ip
+{
+	# returns the IP assigned to first ethernet device
+	dev=$(ifconfig | grep "Ethernet"  | awk ' { print $1 } ' | head -n 1)
+	if [ -z "$dev" ] ; then
+		echo $(ifconfig eth0 | awk -F: '/inet addr:/ {print $2}' | awk '{ print $1 }')
+	else
+		echo $(ifconfig $dev | awk -F: '/inet addr:/ {print $2}' | awk '{ print $1 }')
+	fi
+}	
+	 
+function get_rdns_for_ip
+{
+	# calls host on an IP address and returns its reverse dns 
+	if [ ! -e /usr/bin/host ]; then
+		aptitude -y install dnsutils > /dev/null
+	fi
+	echo $(host $1 | awk '/pointer/ {print $5}' | sed 's/\.$//')
+}
+	 
+function get_rdns
+{
+	# returns the reverse dns of the primary IP assigned to this system
+	echo $(get_rdns $(system_ip))
+}
 

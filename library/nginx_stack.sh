@@ -584,6 +584,10 @@ EOF
 	cd "$curdir"
 }
 
+function get_domain_for_site_id
+{
+	echo $(cat "/etc/nginx/sites-available/$1" | grep server_name | sed 's/;//g' | awk ' {print $2} ')
+}
 
 
 #################################################################################
