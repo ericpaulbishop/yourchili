@@ -152,10 +152,8 @@ EOF
 	# install w3 total cache plugin
 	# not 100% sure of 3.1 support, but let's try
 	# this with latest dev version -- svn r366391
-	cd /tmp
-	rm -rf trunk
-	svn co -r 366391 http://svn.wp-plugins.org/w3-total-cache/trunk
-	mv trunk w3-total-cache
+	cd wp-content/plugins
+	svn co -r 366391 http://svn.wp-plugins.org/w3-total-cache/trunk w3-total-cache
 	cd w3-total-cache
 	find . -name ".svn" | xargs rm -rf
 
