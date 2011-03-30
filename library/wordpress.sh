@@ -14,12 +14,13 @@ function better_wordpress_install
 
 
 	DB_PASSWORD="$1"
-	VPATH=$(cat "/etc/nginx/sites-available/$2" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
+	SITE_ID="$2"
 	WP_USER="$3"
 	WP_PASS="$4"
 	WP_TITLE="$5"
 	WP_EMAIL="$6"
 
+	VPATH=$(cat "/etc/nginx/sites-available/$2" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
 
 	echo "WP_PASS = $4";
 	
@@ -67,7 +68,7 @@ function better_wordpress_install
 	sed -i "s/password_here/$WP_PASS/" wp-config.php
 
 
-	local site_url=$(get_domain_for_site_id $VPATH)
+	local site_url=$(get_domain_for_site_id $SITE_ID)
 	if [ -z "$site_url" ] ; then
 		site_url=$(get_rdns)
 	fi
