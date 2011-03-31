@@ -145,19 +145,29 @@ EOF
 
 
 
+
+
+	# install wp-super-cache plugin
+	cd ./wp-content/plugins/
+	wget http://downloads.wordpress.org/plugin/wp-super-cache.0.9.9.9.zip
+	unzip wp-super-cache.0.9.9.9.zip
+	rm -rf wp-super-cache.0.9.9.9.zip
+	cp wp-super-cache/wp-cache-config-sample.php ../wp-cache-config.php
+	cd ..
+	sed -i -e 's/^\$cache_enabled.*$/$cache_enabled = true;/g'                                                                wp-cache-config.php
+	sed -i -e 's/^\$super_cache_enabled.*$/$cache_enabled = true;/g'                                                          wp-cache-config.php
+	sed -i -e 's/^.*WPCACHEHOME.*WP_CONTENT_DIR.*$/\tdefine( "WPCACHEHOME", WP_CONTENT_DIR . "/plugins/wp-super-cache" );/g'  wp-cache-config.php
+	sed -i -e 's/^.*\?>.*$/$wp_cache_not_logged_in = 0;\n$wp_cache_not_logged_in = 0;\n$wp_cache_mod_rewrite = 0;\n?>\n/g'    wp-cache-config.php
+	cd ..
+	
+	#activate wp-super-cache plugin
+	echo "UPDATE wp_options SET option_value='a:1:{i:0;s:27:\"wp-super-cache/wp-cache.php\";}' WHERE option_name='active_plugins' ;" | mysql --user="$db" --password="$WP_PASS" $db  
+	echo "UPDATE wp_options SET autoload='yes' WHERE option_name='active_plugins' ;" |  mysql --user="$db" --password="$WP_PASS" $db  
+
+
 	chmod 640 wp-config.php
 	chown -R www-data *
 	chgrp -R www-data *
-
-	# install w3 total cache plugin
-	# not 100% sure of 3.1 support, but let's try
-	# this with latest dev version -- svn r366391
-	cd wp-content/plugins
-	svn co -r 366391 http://svn.wp-plugins.org/w3-total-cache/trunk w3-total-cache
-	cd w3-total-cache
-	find . -name ".svn" | xargs rm -rf
-
-
 
 	/etc/init.d/nginx restart
 	/etc/init.d/php5-fpm restart
