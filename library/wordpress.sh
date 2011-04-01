@@ -161,8 +161,9 @@ EOF
 	cd ..
 	
 	#activate wp-super-cache plugin
-	echo "UPDATE wp_options SET option_value='a:1:{i:0;s:27:\"wp-super-cache/wp-cache.php\";}' WHERE option_name='active_plugins' ;" | mysql --user="$db" --password="$WP_PASS" $db  
-	echo "UPDATE wp_options SET autoload='yes' WHERE option_name='active_plugins' ;" |  mysql --user="$db" --password="$WP_PASS" $db  
+	echo "UPDATE wp_options SET option_value='/index.php/archives/%post_id%' WHERE option_name='permalink_structure' ;"              | mysql --user="$db" --password="$WP_PASS" $db
+	echo "UPDATE wp_options SET option_value='a:1:{i:0;s:27:\"wp-super-cache/wp-cache.php\";}' WHERE option_name='active_plugins' ;" | mysql --user="$db" --password="$WP_PASS" $db
+	echo "UPDATE wp_options SET autoload='yes' WHERE option_name='active_plugins' ;"                                                 | mysql --user="$db" --password="$WP_PASS" $db
 
 
 	chmod 640 wp-config.php
