@@ -9,7 +9,7 @@
 
 function git_install
 {
-	aptitude install -y tk8.4 libcurl git
+	aptitude install -y tk8.4 libcurl3 libcurl4 git
 }
 
 function gitosis_install
