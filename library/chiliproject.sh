@@ -23,6 +23,10 @@ function create_chili_project
 
 	local curdir=$(pwd)
 
+	gem install -v=0.4.2 il8n
+	gem install -v=2.3.5 rails
+
+
 	#create chili database
 	db="$CHILI_ID"_rm
 	mysql_create_database "$DB_PASSWORD" "$db"
