@@ -187,26 +187,26 @@ EOF
 
 	
 	#gitosis plugin
-	cd vendor/plugins
-	git clone https://github.com/ericpaulbishop/redmine_gitosis.git
-	cd redmine_gitosis
-	rm -rf .git
-	sed -i -e  "s/'gitosisUrl.*\$/'gitosisUrl' => 'git@localhost:gitosis-admin.git',/"                                         "init.rb"
-	sed -i -e  "s/'gitosisIdentityFile.*\$/'gitosisIdentityFile' => '\/srv\/projects\/redmine\/$CHILI_ID\/.ssh\/id_rsa',/"   "init.rb"
-	sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                        "init.rb"
-	cp -r ~/.ssh "/srv/projects/chili/$CHILI_ID/"
-	chown -R www-data:www-data "/srv/projects/chili/$CHILI_ID/"
-	chmod 600 "/srv/projects/chili/$CHILI_ID/.ssh/id_rsa"
-	cd "/srv/projects/chili/$CHILI_ID/"
-	rake db:migrate_plugins RAILS_ENV=production
+	#cd vendor/plugins
+	#git clone https://github.com/ericpaulbishop/redmine_gitosis.git
+	#cd redmine_gitosis
+	#rm -rf .git
+	#sed -i -e  "s/'gitosisUrl.*\$/'gitosisUrl' => 'git@localhost:gitosis-admin.git',/"                                         "init.rb"
+	#sed -i -e  "s/'gitosisIdentityFile.*\$/'gitosisIdentityFile' => '\/srv\/projects\/redmine\/$CHILI_ID\/.ssh\/id_rsa',/"   "init.rb"
+	#sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                        "init.rb"
+	#cp -r ~/.ssh "/srv/projects/chili/$CHILI_ID/"
+	#chown -R www-data:www-data "/srv/projects/chili/$CHILI_ID/"
+	#chmod 600 "/srv/projects/chili/$CHILI_ID/.ssh/id_rsa"
+	#cd "/srv/projects/chili/$CHILI_ID/"
+	#rake db:migrate_plugins RAILS_ENV=production
 
 
 	#single project plugin
-	cd vendor/plugins
-	git clone https://github.com/ericpaulbishop/redmine_single_project.git
-	cd redmine_single_project
-	rm -rf .git
-	cd "/srv/projects/chili/$CHILI_ID/"
+	#cd vendor/plugins
+	#git clone https://github.com/ericpaulbishop/redmine_single_project.git
+	#cd redmine_single_project
+	#rm -rf .git
+	#cd "/srv/projects/chili/$CHILI_ID/"
 
 	#action_mailer_optional_tls plugin
 	script/plugin install git://github.com/collectiveidea/action_mailer_optional_tls.git
