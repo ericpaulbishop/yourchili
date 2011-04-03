@@ -40,10 +40,10 @@ function create_redmine_project
 	#redmine
 	mkdir -p /srv/projects/redmine
 	cd /srv/projects/redmine
-	git clone https://github.com/edavis10/redmine.git
+	git clone https://github.com/edavis10/chiliproject.git
 	mv redmine "$REDMINE_ID"
 	cd "$REDMINE_ID"
-	git checkout "1.1-stable"
+	git checkout "v1.2.0"
 	rm -rf .git
 
 	cat << EOF >config/database.yml

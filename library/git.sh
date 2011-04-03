@@ -9,12 +9,7 @@
 
 function git_install
 {
-
-	if [ ! -e /usr/local/libexec/git-core/git ] ; then
-		local curdir=$(pwd)
-		aptitude install -y tk8.4 libcurl git
-	fi
-
+	aptitude install -y tk8.4 libcurl git
 }
 
 function gitosis_install
