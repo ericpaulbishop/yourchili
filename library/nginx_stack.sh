@@ -364,6 +364,7 @@ function nginx_ensite
 }
 function nginx_dissite
 {
+	local server_id="$1"
 	rm -rf "$NGINX_CONF_PATH/sites-enabled/$server_id"
 	/etc/init.d/nginx restart
 }
@@ -427,11 +428,11 @@ function nginx_add_include_for_vhost
 function nginx_install 
 {
 	if [ ! -n "$1" ]; then
-		echo "install_nginx requires server user as its first argument"
+		echo "nginx_install requires server user as its first argument"
 		return 1;
 	fi
 	if [ ! -n "$2" ]; then
-		echo "install_nginx requires server group as its second argument"
+		echo "nginx_install requires server group as its second argument"
 		return 1;
 	fi
 
@@ -440,12 +441,16 @@ function nginx_install
 	local NGINX_USE_PHP="$3"
 	local NGINX_USE_PASSENGER="$4"
 	local NGINX_USE_PERL="$5"
+	local NGINX_SERVER_STRING="$6"
 
 	if [ -z "$NGINX_USE_PHP" ] ; then
 		NGINX_USE_PHP=1
 	fi
 	if [ -z "$NGINX_USE_PASSENGER" ] ; then
 		NGINX_USE_PASSENGER=1
+	fi
+	if [ -z "$NGINX_SERVER_STRING" ] ; then
+		NGINX_SERVER_STRING=$(randomString 25)
 	fi
 
 	if [ "$NGINX_USE_PHP" = 1 ] ; then
@@ -479,10 +484,9 @@ function nginx_install
 	wget "http://nginx.org/download/nginx-$NGINX_VER.tar.gz"
 	tar -xzvf "nginx-$NGINX_VER.tar.gz"
 
-	#I think Reddit has the right idea here....
-	#Lil' Bobby Tables, aint he so cute?
-	cat "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c" | sed "s/\"Server: nginx\"/\"Server: '; DROP TABLE server_types; --\"/g" > /tmp/ngx_h1.tmp
-	cat /tmp/ngx_h1.tmp | sed "s/\"Server: \".*NGINX_VER/\"Server: '; DROP TABLE servertypes; --\"/g" > "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
+	#Camouflage NGINX Server Version String....
+	cat "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c" | sed "s/\"Server: nginx\"/\"Server: '$NGINX_SERVER_STRING\"/g" > /tmp/ngx_h1.tmp
+	cat /tmp/ngx_h1.tmp | sed "s/\"Server: \".*NGINX_VER/\"Server: '$NGINX_SERVER_STRING\"/g" > "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
 
 
 	#maek eet
