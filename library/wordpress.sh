@@ -47,7 +47,8 @@ function better_wordpress_install
 	chown -R www-data "$VPATH"
 	
 
-	cd "$VPATH"	
+	cd "$VPATH"
+	rm -rf index.html
 	cp wp-config-sample.php wp-config.php
 	chown www-data wp-config.php
 

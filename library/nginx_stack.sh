@@ -485,8 +485,8 @@ function nginx_install
 	tar -xzvf "nginx-$NGINX_VER.tar.gz"
 
 	#Camouflage NGINX Server Version String....
-	cat "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c" | sed "s/\"Server: nginx\"/\"Server: '$NGINX_SERVER_STRING\"/g" > /tmp/ngx_h1.tmp
-	cat /tmp/ngx_h1.tmp | sed "s/\"Server: \".*NGINX_VER/\"Server: '$NGINX_SERVER_STRING\"/g" > "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
+	cat "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c" | sed "s/\"Server: nginx\"/\"Server: $NGINX_SERVER_STRING\"/g" > /tmp/ngx_h1.tmp
+	cat /tmp/ngx_h1.tmp | sed "s/\"Server: \".*NGINX_VER/\"Server: $NGINX_SERVER_STRING\"/g" > "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
 
 
 	#maek eet
