@@ -282,20 +282,20 @@ server
 	$ssl_cert
 	$ssl_ckey
 
-	error_page	400 406 407 409 410 411 412 413 414 415 416 417 418 422 423 424 425 426 444 449 450 490 	/error/400.html
-	error_page	401	/error/401.html
-	error_page	402	/error/402.html
-	error_page	403	/error/403.html
-	error_page	404	/error/404.html
-	error_page	405	/error/405.html
-	error_page	408	/error/408.html
-
-	error_page	500 506 507 509 510	/error/500.html
-	error_page	501	/error/501.html
-	error_page	502	/error/502.html
-	error_page	503	/error/503.html
-	error_page	504	/error/504.html
-	error_page	505	/error/505.html
+	error_page	400 406 407 409 410 411 412 413 414 415 416 417 418 422 423 424 425 426 444 449 450 490 	/error/400.html;
+	error_page	401	/error/401.html;
+	error_page	402	/error/402.html;
+	error_page	403	/error/403.html;
+	error_page	404	/error/404.html;
+	error_page	405	/error/405.html;
+	error_page	408	/error/408.html;
+ 
+	error_page	500 506 507 509 510	/error/500.html;
+	error_page	501	/error/501.html;
+	error_page	502	/error/502.html;
+	error_page	503	/error/503.html;
+	error_page	504	/error/504.html;
+	error_page	505	/error/505.html;
 
 	location = /error/403.html
 	{
