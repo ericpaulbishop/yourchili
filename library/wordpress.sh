@@ -42,8 +42,8 @@ function better_wordpress_install
 	wget "http://wordpress.org/$wp_ver_file"
 	tar xfz $wp_ver_file
 	rm -rf $wp_ver_file
-	rm -rf "$VPATH"
-	mv "wordpress" "$VPATH"
+	mv "wordpress"/* "$VPATH"
+	rm -rf "wordpress"
 	chown -R www-data "$VPATH"
 	
 
