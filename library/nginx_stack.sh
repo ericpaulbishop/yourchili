@@ -282,6 +282,26 @@ server
 	$ssl_cert
 	$ssl_ckey
 
+	error_page	400 406 407 409 410 411 412 413 414 415 416 417 418 422 423 424 425 426 444 449 450 490 	/error/400.html
+	error_page	401	/error/401.html
+	error_page	402	/error/402.html
+	error_page	403	/error/403.html
+	error_page	404	/error/404.html
+	error_page	405	/error/405.html
+	error_page	408	/error/408.html
+
+	error_page	500 506 507 509 510	/error/500.html
+	error_page	501	/error/501.html
+	error_page	502	/error/502.html
+	error_page	503	/error/503.html
+	error_page	504	/error/504.html
+	error_page	505	/error/505.html
+
+	location = /error/403.html
+	{
+		allow all;
+	}
+
 	#rails
 EOF
 
@@ -330,22 +350,9 @@ EOF
 	echo "}" >> "$config_path"
 	
 
-	mkdir -p "$NGINX_PREFIX/$server_id/public_html"
 	mkdir -p "$NGINX_PREFIX/$server_id/logs"
-	cat << EOF >"$NGINX_PREFIX/$server_id/public_html/index.html"
-<html>
-	<head>
-		<title>Nothing To See Here</title>
-	</head>
-	<body style="background:#FFBBBB;">
-		<center>
-			<p>Nginx is running on $server_id</p>
-			<p>Please disregard the pink <a href="http://xkcd.com/636/">brontosaurus</a>.</p>
-			<p>Move along, nothing to see here...</p>
-		</center>
-	</body>
-</html>
-EOF
+	cp -r "$REDCLOUD_INSTALL_DIR/default_html" "$NGINX_PREFIX/$server_id/public_html"
+	cat "$REDCLOUD_INSTALL_DIR/default_html/index.html" | sed "s/SERVER_ID/$server_id/g" > "$NGINX_PREFIX/$server_id/public_html/index.html"
 	chown -R www-data:www-data "$NGINX_PREFIX/$server_id"
 
 }
