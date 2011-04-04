@@ -204,11 +204,11 @@ EOF
 
 
 	#single project plugin
-	#cd vendor/plugins
-	#git clone https://github.com/ericpaulbishop/redmine_single_project.git
-	#cd redmine_single_project
-	#rm -rf .git
-	#cd "/srv/projects/chili/$CHILI_ID/"
+	cd vendor/plugins
+	git clone https://github.com/ericpaulbishop/redmine_single_project.git
+	cd redmine_single_project
+	rm -rf .git
+	cd "/srv/projects/chili/$CHILI_ID/"
 
 	#action_mailer_optional_tls plugin
 	script/plugin install git://github.com/collectiveidea/action_mailer_optional_tls.git
