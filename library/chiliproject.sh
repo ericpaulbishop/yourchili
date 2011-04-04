@@ -65,6 +65,7 @@ EOF
 		rake generate_session_store
 	fi
 	RAILS_ENV=production rake db:migrate
+
 	echo "en" | RAILS_ENV=production rake chiliproject:load_default_data
 	mkdir tmp public/plugin_assets
 	sudo chmod -R 755 files log tmp public/plugin_assets
@@ -193,7 +194,7 @@ EOF
 	git checkout 2011
 	rm -rf .git
 	sed -i -e  "s/'gitosisUrl.*\$/'gitosisUrl' => 'git@localhost:gitosis-admin.git',/"                                         "init.rb"
-	sed -i -e  "s/'gitosisIdentityFile.*\$/'gitosisIdentityFile' => '\/srv\/projects\/redmine\/$CHILI_ID\/.ssh\/id_rsa',/"   "init.rb"
+	sed -i -e  "s/'gitosisIdentityFile.*\$/'gitosisIdentityFile' => '\/srv\/projects\/chili\/$CHILI_ID\/.ssh\/id_rsa',/"   "init.rb"
 	sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                        "init.rb"
 	cp -r ~/.ssh "/srv/projects/chili/$CHILI_ID/"
 	chown -R www-data:www-data "/srv/projects/chili/$CHILI_ID/"
