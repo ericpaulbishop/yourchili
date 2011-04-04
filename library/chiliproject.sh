@@ -196,7 +196,7 @@ EOF
 	sed -i -e  "s/'gitosisUrl.*\$/'gitosisUrl' => 'git@localhost:gitosis-admin.git',/"                                         "init.rb"
 	sed -i -e  "s/'gitosisIdentityFile.*\$/'gitosisIdentityFile' => '\/srv\/projects\/chili\/$CHILI_ID\/.ssh\/id_rsa',/"   "init.rb"
 	sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                        "init.rb"
-	cp -r ~/.ssh "/srv/projects/chili/$CHILI_ID/"
+	cp -r /root/.ssh "/srv/projects/chili/$CHILI_ID/"
 	chown -R www-data:www-data "/srv/projects/chili/$CHILI_ID/"
 	chmod 600 "/srv/projects/chili/$CHILI_ID/.ssh/id_rsa"
 	cd "/srv/projects/chili/$CHILI_ID/"
