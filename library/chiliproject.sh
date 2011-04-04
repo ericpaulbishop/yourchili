@@ -44,7 +44,7 @@ function create_chili_project
 	#get chiliproject code
 	mkdir -p /srv/projects/chili
 	cd /srv/projects/chili
-	git clone https://github.com/edavis10/chiliproject.git
+	git clone git://github.com/chiliproject/chiliproject.git
 	mv chiliproject "$CHILI_ID"
 	cd "$CHILI_ID"
 	git checkout "v1.2.0"
