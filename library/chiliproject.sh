@@ -66,7 +66,7 @@ EOF
 	fi
 	RAILS_ENV=production rake db:migrate
 
-	echo "en" | RAILS_ENV=production rake chiliproject:load_default_data
+	echo "en" | RAILS_ENV=production rake redmine:load_default_data
 	mkdir tmp public/plugin_assets
 	sudo chmod -R 755 files log tmp public/plugin_assets
 
