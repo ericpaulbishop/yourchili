@@ -139,7 +139,7 @@ function create_git
 	#post-receive hook
 	pr_file="/srv/projects/git/repositories/$PROJ_ID.git/hooks/post-receive"
 	cat << EOF > "$pr_file"
-	cd "/srv/projects/redmine/$REDMINE_ID"
+	cd "/srv/projects/chili/$REDMINE_ID"
 	ruby script/runner "Repository.fetch_changesets" -e production
 EOF
 
