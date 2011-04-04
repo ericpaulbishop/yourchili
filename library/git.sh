@@ -39,7 +39,7 @@ function gitosis_install
 		chown -R git:www-data /srv/projects/git
 		if [ ! -e /root/.ssh/id_rsa ] ; then
 			rm -rf /root/.ssh/id_rsa*
-			printf "/root/.ssh/id_rsa\n\n\n\n\n" | ssh-keygen -t rsa 
+			printf "/root/.ssh/id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P "" 
 		fi
 		sudo -H -u git gitosis-init < /root/.ssh/id_rsa.pub
 		chmod -R 775 /srv/projects/git/repositories
