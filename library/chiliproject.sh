@@ -191,7 +191,6 @@ EOF
 	cd vendor/plugins
 	git clone https://github.com/ericpaulbishop/redmine_gitosis.git
 	cd redmine_gitosis
-	git checkout 2011
 	rm -rf .git
 	sed -i -e  "s/'gitosisUrl.*\$/'gitosisUrl' => 'git@localhost:gitosis-admin.git',/"                                         "init.rb"
 	sed -i -e  "s/'gitosisIdentityFile.*\$/'gitosisIdentityFile' => '\/srv\/projects\/chili\/$CHILI_ID\/.ssh\/id_rsa',/"   "init.rb"
