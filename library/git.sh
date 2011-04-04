@@ -9,12 +9,12 @@
 
 function git_install
 {
-	aptitude install -y tk8.4 libcurl3 libcurl4 git
+	aptitude install -y tk8.4 libcurl3 libcurl-dev git
 }
 
 function gitosis_install
 {
-
+	aptitude install -y ssh
 	git_install
 
 	if [ ! -d "/srv/projects/git" ] ; then
