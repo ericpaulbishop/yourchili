@@ -334,6 +334,7 @@ EOF
 	${php_comment}#php
 	${php_comment}location ~ \.php\$
 	${php_comment}{
+	${php_comment}	try_files \$uri =404;
 	${php_comment}	fastcgi_pass   unix:/var/run/php-fpm.sock ;
 	${php_comment}	include        $NGINX_CONF_PATH/fastcgi_params;
 	${php_comment}}
