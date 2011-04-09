@@ -35,11 +35,11 @@ function create_chili_project
 
 
 	#In order to clone chili repo we need git,
-	#and gitosis plugin gets installed even if we're using SVN
-	#so just go ahead and install git & gitosis no matter what
-	#does nothing if git/gitosis is already installed
+	#and git hosting plugin gets installed even if we're using SVN
+	#so just go ahead and install git & gitolite no matter what
+	#does nothing if git/gitolite is already installed
 	git_install
-	gitosis_install
+	gitolite_install
 
 	#get chiliproject code
 	mkdir -p /srv/projects/chili
@@ -73,7 +73,7 @@ EOF
 
 	# save whether we have a public project here 
 	# yes, this should be on a per-project basis, but
-	# this only matters for display of urls in gitosis plugin, so
+	# this only matters for display of urls in git hosting plugin, so
 	# it's not that big a deal and can easily be changed later
 	is_public="false"
 	if [ "$IS_PUBLIC" == 1 ] || [ "$IS_PUBLIC" == "true" ] ; then
@@ -94,9 +94,9 @@ EOF
 	if [ "$SCM" = "git" ] ; then
 		create_git "$PROJ_ID" "$CHILI_ID" "$CHILI_ADMIN_PW" "$FORCE_SSL_AUTH"
 		if [ "$is_public" = "true" ] ; then
-			touch "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-			chmod -R 775 "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-			chown -R git:www-data "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+			touch "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+			chmod -R 775 "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+			chown -R git:www-data "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
 		fi
 
 	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
@@ -126,7 +126,7 @@ EOF
 		cat << EOF >>create.rb
 repo = Repository::Git.create(
 					:project_id=>project.id,
-					:url=>"/srv/projects/git/repositories/$PROJ_ID.git"
+					:url=>"/srv/git/repositories/$PROJ_ID.git"
 					)
 EOF
 	elif [ "$SCM" = "svn" ] || [ "$SCM" = "subversion" ] ; then
@@ -187,13 +187,13 @@ EOF
 
 
 	
-	#gitosis plugin
+	#git hosting plugin
 	cd vendor/plugins
-	git clone https://github.com/ericpaulbishop/redmine_gitosis.git
-	cd redmine_gitosis
+	git clone https://github.com/ericpaulbishop/redmine_git_hosting.git
+	cd redmine_git_hosting
 	rm -rf .git
-	sed -i -e  "s/'gitosisUrl.*\$/'gitosisUrl' => 'git@localhost:gitosis-admin.git',/"                                         "init.rb"
-	sed -i -e  "s/'gitosisIdentityFile.*\$/'gitosisIdentityFile' => '\/srv\/projects\/chili\/$CHILI_ID\/.ssh\/id_rsa',/"   "init.rb"
+	sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                         "init.rb"
+	sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '\/srv\/projects\/chili\/$CHILI_ID\/.ssh\/id_rsa',/"   "init.rb"
 	sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                        "init.rb"
 	cp -r /root/.ssh "/srv/projects/chili/$CHILI_ID/"
 	chown -R www-data:www-data "/srv/projects/chili/$CHILI_ID/"
@@ -275,9 +275,9 @@ function add_chili_project
 	if [ "$SCM" = "git" ] ; then
 		create_git "$PROJ_ID" "$CHILI_ID" "$CHILI_ADMIN_PW" "$FORCE_SSL_AUTH"
 		if [ "$is_public" = "true" ] ; then
-			touch "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-			chmod -R 775 "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-			chown -R git:www-data "/srv/projects/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+			touch "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+			chmod -R 775 "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
+			chown -R git:www-data "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
 		fi
 
 	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
@@ -305,7 +305,7 @@ EOF
 		cat << EOF >>add.rb
 repo = Repository::Git.create(
 					:project_id=>project.id,
-					:url=>"/srv/projects/git/repositories/$PROJ_ID.git"
+					:url=>"/srv/git/repositories/$PROJ_ID.git"
 					)
 EOF
 	elif [ "$SCM" = "svn" ] || [ "$SCM" = "subversion" ] ; then
