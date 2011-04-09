@@ -46,6 +46,7 @@ function gitolite_install
 		git checkout "v2.0"
 		mkdir -p /usr/local/share/gitolite/conf /usr/local/share/gitolite/hooks /srv/git/repositories
 		src/gl-system-install /usr/local/bin /usr/local/share/gitolite/conf /usr/local/share/gitolite/hooks
+		chown -R git:www-data /srv/git
 		su git -c "gl-setup -q /tmp/root.pub"
 
 
