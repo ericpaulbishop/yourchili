@@ -3,7 +3,7 @@
 
 
 ##################
-# Git / Gitosis  #
+# Git / Gitolite  #
 ##################
 
 
@@ -11,6 +11,82 @@ function git_install
 {
 	aptitude install -y tk8.4 libcurl3 libcurl-dev git
 }
+
+function gitolite_install
+{
+	aptitude install -y ssh  git-daemon-run
+	git_install
+	if [ ! -d "/srv/git" ] ; then
+		
+		#make sure root has a pubkey
+		if [ ! -e /root/.ssh/id_rsa ] ; then
+			rm -rf /root/.ssh/id_rsa*
+			printf "/root/.ssh/id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P "" 
+		fi
+		
+		#create git user
+		mkdir -p /srv/git
+		chmod -R 755 /srv/git/repositories
+		adduser \
+			--system \
+			--shell /bin/sh \
+			--gecos 'git version control' \
+			--ingroup www-data \
+			--disabled-password \
+			--home /srv/git \
+			git
+		chown -R git:www-data /srv/git
+
+		#install gitolite
+		local curdir=$(pwd)
+		cp /root/.ssh/id_rsa.pub /tmp/root.pub
+		cd /tmp
+		git clone git://github.com/sitaramc/gitolite.git
+		cd gitolite
+		git checkout "v2.0"
+		mkdir -p /usr/local/share/gitolite/conf /usr/local/share/gitolite/hooks /srv/git/repositories
+		src/gl-system-install /usr/local/bin /usr/local/share/gitolite/conf /usr/local/share/gitolite/hooks
+		su git -c "gl-setup -q /tmp/root.pub"
+
+
+		#install git daemon
+		#(only exports public projects, with git-daemon-export-ok file, so by default it is secure)
+		cat << 'EOF' > /etc/init.d/git-daemon
+#!/bin/sh
+
+test -f /usr/lib/git-core/git-daemon || exit 0
+
+. /lib/lsb/init-functions
+
+GITDAEMON_OPTIONS="--reuseaddr --verbose --base-path=/srv/git/repositories/ --detach"
+
+case "$1" in
+start)  log_daemon_msg "Starting git-daemon"
+
+        start-stop-daemon --start -c git:www-data --quiet --background \
+                     --exec /usr/lib/git-core/git-daemon -- ${GITDAEMON_OPTIONS}
+
+        log_end_msg $?
+        ;;
+stop)   log_daemon_msg "Stopping git-daemon"
+
+        start-stop-daemon --stop --quiet --name git-daemon
+
+        log_end_msg $?
+        ;;
+*)      log_action_msg "Usage: /etc/init.d/git-daemon {start|stop}"
+        exit 2
+        ;;
+esac
+exit 0
+EOF
+		chmod 755 "/etc/init.d/git-daemon"
+		update-rc.d git-daemon defaults
+		/etc/init.d/git-daemon start
+
+	fi
+}
+
 
 function gitosis_install
 {
