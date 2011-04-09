@@ -61,5 +61,3 @@ create_chili_project   "$DB_PASSWORD" "miner1" "my-git-proj1" "1" "git" "My Git 
 #
 enable_chili_for_vhost "mysite.com" "miner1" "0" "1"
 
-enable_git_for_vhost     "mysite.com"        "my-git-proj1" "0"
-
