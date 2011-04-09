@@ -192,7 +192,7 @@ function restore_projects
 	local curdir=$(pwd)
 
 	git_install
-	gitosis_install
+	gitolite_install
 
 
 	if [ -e "$BACKUP_DIR/projects.tar.bz2" ] ; then
