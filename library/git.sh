@@ -14,7 +14,7 @@ function git_install
 
 function gitolite_install
 {
-	aptitude install -y ssh  git-daemon-run
+	aptitude install -y ssh 
 	git_install
 	if [ ! -d "/srv/git" ] ; then
 		
