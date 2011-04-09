@@ -27,6 +27,8 @@ function create_chili_project
 	gem install -v=2.3.5 rails
 
 
+
+
 	#create chili database
 	db="$CHILI_ID"_rm
 	mysql_create_database "$DB_PASSWORD" "$db"
@@ -256,7 +258,7 @@ function add_chili_project
 
 	# save whether we have a public project here 
 	# yes, this should be on a per-project basis, but
-	# this only matters for display of urls in gitosis plugin, so
+	# this only matters for display of urls in gitolite plugin, so
 	# it's not that big a deal and can easily be changed later
 	is_public="false"
 	if [ "$IS_PUBLIC" == 1 ] || [ "$IS_PUBLIC" == "true" ] ; then
@@ -358,17 +360,17 @@ function enable_chili_for_vhost
 	
 
 	vhost_domain=$(echo $VHOST_ID | sed 's/^www\.//g')
-	gitosis_init="/srv/projects/chili/$CHILI_ID/vendor/plugins/redmine_gitosis/init.rb"
+	gitolite_init="/srv/projects/chili/$CHILI_ID/vendor/plugins/redmine_git_hosting/init.rb"
 	public=""
 	if [ -e "/srv/projects/chili/$CHILI_ID/is_public" ] ; then
 		public=$(grep "true" "/srv/projects/chili/$CHILI_ID/is_public")
 	fi
 	if [ -n "$public" ] ; then
-		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => 'git:\/\/$vhost_domain\/,http:\/\/$vhost_domain\/git\/',/"  "$gitosis_init"
+		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => 'git:\/\/$vhost_domain\/,http:\/\/$vhost_domain\/git\/',/"  "$gitolite_init"
 	else
-		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => '',/"                                                       "$gitosis_init"
+		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => '',/"                                                       "$gitolite_init"
 	fi
-	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => 'git@$vhost_domain:,https:\/\/[user]@$vhost_domain\/git\/',/"     "$gitosis_init"
+	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => 'git@$vhost_domain:,https:\/\/[user]@$vhost_domain\/git\/',/"     "$gitolite_init"
 
 
 

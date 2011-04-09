@@ -222,14 +222,12 @@ function ruby_install
 		ln -s "$RUBY_PREFIX/bin/$ex" "/usr/bin/$ex"
 	done
 
-	gem install mysql
 	gem install rails --version 3.0.5
-
-	#necessary for redmine grack auth
+	gem install mysql
 	gem install dbi
 	gem install dbd-mysql
 
-	#necessary for redmine gitosis plugin
+	#necessary for redmine git hosting plugin
 	gem install inifile
 	gem install net-ssh
 	gem install lockfile

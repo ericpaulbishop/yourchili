@@ -100,9 +100,9 @@ function create_git
 	local curdir=$(pwd)
 
 
-	#does nothing if git/gitosis is already installed
+	#does nothing if git/gitolite is already installed
 	git_install
-	gitosis_install
+	gitolite_install
 
 	#create git repository
 	mkdir -p "/srv/git/repositories/$PROJ_ID.git"
