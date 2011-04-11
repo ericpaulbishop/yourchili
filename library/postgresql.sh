@@ -66,7 +66,7 @@ function postgresql_create_database
 	# $1 - the db name to create
 
 	if [ ! -n "$1" ]; then
-		echo "mysql_create_database() requires the name of the database as the first argument"
+		echo "postgresql_create_database() requires the name of the database as the first argument"
 		return 1;
 	fi
 	

@@ -5,21 +5,35 @@
 #################
 
 
-function create_chili_project
+function install_chili_project
 {
 	#arguments
-	local DB_PASSWORD=$1               #root database password, necessary to create database
-	local CHILI_ID=$2                  #id for chili installation, will be installed to /srv/projects/chili/$CHILI_ID
-	local PROJ_ID=$3                   #id for project being created, this will appear in SCM URLs
-	local IS_PUBLIC=$4                 #is this project publicly visible?  Can anyone grab the code?
-	local SCM=$5                       #SCM to use, currently only "git" and "svn" are supported
-	local PROJ_NAME=$6                 #project name, as it will appear in chili
-	local CHILI_ADMIN_USER=$7          #chili admin user name
-	local CHILI_ADMIN_PW=$8            #doubles as chili admin user pw & chili database pw
-	local CHILI_ADMIN_FIRST=$9         #first name of chili admin user
-	local CHILI_ADMIN_LAST=${10}       #last name of chili admin user
-	local CHILI_ADMIN_EMAIL=${11}      #email of chili admin user
-	local FORCE_SSL_AUTH=${12}         #return unauthorized if someone tries to perform password-protected operation over http and not https, only works when SCM=git
+	local USE_VHOST=shift
+	local CHILI_VHOST=shift
+	local CHILI_VHOST_SUBDIR=shift
+	
+	local USE_SSL=shift
+	local SSL_VHOST=shift
+	local SSL_VHOST_SUBDIR=shift
+	
+	local DB_TYPE=shift		   # "mysql" or "postresql"	
+	local DB_PASSWORD=shift            # mysql root database password, necessary to create database if DB_TYPE=mysql
+
+	local CHILI_IS_PUBLIC=shift
+	local CHILI_ADMIN_USER=shift       #chili admin user name
+	local CHILI_ADMIN_PW=shift         #doubles as chili admin user pw & chili database pw
+	local CHILI_ADMIN_FIRST=shift      #first name of chili admin user
+	local CHILI_ADMIN_LAST=shift       #last name of chili admin user
+	local CHILI_ADMIN_EMAIL=shift      #email of chili admin user
+
+
+	local SCM=shift                    #SCM to use, currently only "git" and "svn" are supported
+	local PROJ_ID=shift                #id for project being created, this will appear in SCM URLs
+	local PROJ_IS_PUBLIC=shift         #is this project publicly visible?  Can anyone grab the code?
+	local PROJ_NAME=shift              #project name, as it will appear in chili
+
+
+
 
 	local curdir=$(pwd)
 
@@ -31,9 +45,16 @@ function create_chili_project
 
 	#create chili database
 	db="$CHILI_ID"_rm
-	mysql_create_database "$DB_PASSWORD" "$db"
-	mysql_create_user     "$DB_PASSWORD" "$db" "$CHILI_ADMIN_PW"
-	mysql_grant_user      "$DB_PASSWORD" "$db" "$db"
+	if [ "$DB_TYPE" = "mysql" ] && [ -n "$DB_PASSWORD"] ; then
+		mysql_create_database "$DB_PASSWORD" "$db"
+		mysql_create_user     "$DB_PASSWORD" "$db" "$CHILI_ADMIN_PW"
+		mysql_grant_user      "$DB_PASSWORD" "$db" "$db"
+	else
+		postgresql_install         #be sure it's installed
+		postgresql_create_database "$db"
+		postgresql_create_user     "$db" "$CHILI_ADMIN_PW"
+		postgresql_grant_user      "$db" "$db"
+	fi
 
 
 	#In order to clone chili repo we need git,
@@ -42,6 +63,7 @@ function create_chili_project
 	#does nothing if git/gitolite is already installed
 	git_install
 	gitolite_install
+
 
 	#get chiliproject code
 	mkdir -p /srv/projects/chili
@@ -54,7 +76,7 @@ function create_chili_project
 
 	cat << EOF >config/database.yml
 production:
-  adapter: mysql
+  adapter: $DB_TYPE
   database: $db
   host: localhost
   username: $db
