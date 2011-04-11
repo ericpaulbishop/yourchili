@@ -594,6 +594,13 @@ EOF
 	cd "$curdir"
 }
 
+function get_root_for_site_id
+{
+	VHOST_ID=shift
+	local vhost_root=$(cat "/etc/nginx/sites-available/$VHOST_ID" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
+	echo "$vhost_root"
+}
+
 function get_domain_for_site_id
 {
 	echo $(cat "/etc/nginx/sites-available/$1" | grep server_name | sed 's/;//g' | awk ' {print $2} ')

@@ -90,10 +90,10 @@ EOF
 
 function create_git
 {
-	local PROJ_ID=$1
+	local PROJ_ID=shift
 	
-	#optional -- only if we need to set up a post-recieve redmine hook
-	local REDMINE_ID=$2
+	#optional -- only if we need to set up a post-recieve chiliproject hook
+	local CHILI_INSTALL_PATH=shift
 
 	
 	local curdir=$(pwd)
@@ -112,11 +112,11 @@ function create_git
 	chown -R git:www-data /srv/git/repositories/
 
 	
-	if [ -n "$REDMINE_ID" ] ; then
+	if [ -n "$CHILI_INSTALL_PATH" ] ; then
 		#post-receive hook
 		pr_file="/srv/git/repositories/$PROJ_ID.git/hooks/post-receive"
 		cat << EOF > "$pr_file"
-cd "/srv/projects/chili/$REDMINE_ID"
+cd "$CHILI_INSTALL_PATH"
 ruby script/runner "Repository.fetch_changesets" -e production
 EOF
 

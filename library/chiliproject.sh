@@ -8,12 +8,11 @@
 function install_chili_project
 {
 	#arguments
-	local USE_VHOST=shift
 	local CHILI_VHOST=shift
 	local CHILI_VHOST_SUBDIR=shift
 	
 	local USE_SSL=shift
-	local SSL_VHOST=shift
+	local FORCE_SSL=shift
 	local SSL_VHOST_SUBDIR=shift
 	
 	local DB_TYPE=shift		   # "mysql" or "postresql"	
@@ -41,15 +40,38 @@ function install_chili_project
 	gem install -v=2.3.5 rails
 
 
+	local chili_install_path=""
+	if [ -z "$CHILI_VHOST" ] && [ "$USE_SSL" == "0" ] ; then
+		echo "ERROR: You must specify a virtualhost and/or install to SSL Virtual Host\n";
+		return
+	elif [ -z "$CHILI_VHOST" ] ; then
+		#install to SSL VHOST
+		chili_install_path="/srv/www/nginx_ssl/chili"
+		chili_num=1
+		while [ -e "$chili_install_path" ] ; do
+			chili_install_path="/srv/www/nginx_ssl/chili_$chili_num"
+			chili_num=$(( $chili_num + 1 ))
+		done
+	else
+		#install to VHOST
+		chili_install_path="/srv/www/$CHILI_VHOST/chili"
+		chili_num=1
+		while [ -e "$chili_install_path" ] ; do
+			chili_install_path="/srv/www/$CHILI_VHOST/chili_$chili_num"
+			chili_num=$(( $chili_num + 1 ))
+		done
+	fi
 
 
 	#create chili database
-	db="$CHILI_ID"_rm
+	local db="$CHILI_ID"_rm
 	if [ "$DB_TYPE" = "mysql" ] && [ -n "$DB_PASSWORD"] ; then
+		gem install mysql
 		mysql_create_database "$DB_PASSWORD" "$db"
 		mysql_create_user     "$DB_PASSWORD" "$db" "$CHILI_ADMIN_PW"
 		mysql_grant_user      "$DB_PASSWORD" "$db" "$db"
 	else
+		gem install pg
 		postgresql_install         #be sure it's installed
 		postgresql_create_database "$db"
 		postgresql_create_user     "$db" "$CHILI_ADMIN_PW"
@@ -66,11 +88,10 @@ function install_chili_project
 
 
 	#get chiliproject code
-	mkdir -p /srv/projects/chili
-	cd /srv/projects/chili
+	cd /tmp
 	git clone git://github.com/chiliproject/chiliproject.git
-	mv chiliproject "$CHILI_ID"
-	cd "$CHILI_ID"
+	mv chiliproject "$chili_install_path"
+	cd "$chili_install_path"
 	git checkout "v1.2.0"
 	rm -rf .git
 
@@ -92,31 +113,12 @@ EOF
 
 	echo "en" | RAILS_ENV=production rake redmine:load_default_data
 	mkdir tmp public/plugin_assets
-	sudo chmod -R 755 files log tmp public/plugin_assets
-
-
-	# save whether we have a public project here 
-	# yes, this should be on a per-project basis, but
-	# this only matters for display of urls in git hosting plugin, so
-	# it's not that big a deal and can easily be changed later
-	is_public="false"
-	if [ "$IS_PUBLIC" == 1 ] || [ "$IS_PUBLIC" == "true" ] ; then
-		is_public="true"
-		echo "$is_public" > "is_public"
-	fi
-
-
-	# for git, when hook is called both git and www-data users 
-	# (which are in the same www-data group) need write access to log directory
-	chmod -R 775 log  
-
-
-
+	chmod -R 755 files log tmp public/plugin_assets
 
 
 	#SCM stuff
 	if [ "$SCM" = "git" ] ; then
-		create_git "$PROJ_ID" "$CHILI_ID" "$CHILI_ADMIN_PW" "$FORCE_SSL_AUTH"
+		create_git "$PROJ_ID" "$chili_install_path"
 		if [ "$is_public" = "true" ] ; then
 			touch "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
 			chmod -R 775 "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
@@ -205,25 +207,34 @@ EOF
 
 
 	#delete original admin user & update info by running create script
-	echo "DELETE FROM users WHERE login=\"admin\" ; " | mysql -u root -p"$DB_PASSWORD" "$db"
+	if [ "$DB_TYPE" = "mysql" ] ; then
+		echo "DELETE FROM users WHERE login=\"admin\" ; " | mysql -u root -p"$DB_PASSWORD" "$db"
+	else
+		echo "DELETE FROM users WHERE login=\"admin\" ; " | sudo -u postgres psql "$db"
+
+	fi
 	ruby script/console production < create.rb
 	rm -rf create.rb
 
 
 	
+	
 	#git hosting plugin
-	cd vendor/plugins
-	git clone https://github.com/ericpaulbishop/redmine_git_hosting.git
-	cd redmine_git_hosting
-	rm -rf .git
-	sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                         "init.rb"
-	sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '\/srv\/projects\/chili\/$CHILI_ID\/.ssh\/id_rsa',/"   "init.rb"
-	sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                        "init.rb"
-	cp -r /root/.ssh "/srv/projects/chili/$CHILI_ID/"
-	chown -R www-data:www-data "/srv/projects/chili/$CHILI_ID/"
-	chmod 600 "/srv/projects/chili/$CHILI_ID/.ssh/id_rsa"
-	cd "/srv/projects/chili/$CHILI_ID/"
-	rake db:migrate_plugins RAILS_ENV=production
+	if [ "$SCM" = "git" ] ; then
+		cd vendor/plugins
+		git clone https://github.com/ericpaulbishop/redmine_git_hosting.git
+		cd redmine_git_hosting
+		rm -rf .git
+		escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
+		sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                              "init.rb"
+		sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/id_rsa',/"   "init.rb"
+		sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                "init.rb"
+		cp -r /root/.ssh "$chili_install_path"
+		chown -R www-data:www-data "$chili_install_path"
+		chmod 600 "$chili_install_path/.ssh/id_rsa"
+		cd "$chili_install_path"
+		rake db:migrate_plugins RAILS_ENV=production
+	fi
 
 
 	#single project plugin
@@ -231,7 +242,7 @@ EOF
 	git clone https://github.com/ericpaulbishop/redmine_single_project.git
 	cd redmine_single_project
 	rm -rf .git
-	cd "/srv/projects/chili/$CHILI_ID/"
+	cd "$chili_install_path"
 
 	#action_mailer_optional_tls plugin
 	script/plugin install git://github.com/collectiveidea/action_mailer_optional_tls.git
@@ -244,15 +255,93 @@ EOF
 	rm -rf redmine_theme_pack
 
 
+	#update permissions on chili install dir
+	chown -R www-data:www-data "$chili_install_path"
 
-	chown    www-data:www-data /srv/projects
-	chown -R www-data:www-data /srv/projects/chili
+
+	#configure symlinks/vhosts
+	
 
 	/etc/init.d/nginx restart
 	
 	cd "$curdir"
 
 }
+
+
+
+function enable_chili_for_vhost
+{
+	local VHOST_ID=$1
+	local CHILI_ID=$2
+	local FORCE_CHILI_SSL=$3
+	local CHILI_IS_ROOT=$4
+	
+
+	vhost_domain=$(echo $VHOST_ID | sed 's/^www\.//g')
+	gitolite_init="/srv/projects/chili/$CHILI_ID/vendor/plugins/redmine_git_hosting/init.rb"
+	public=""
+	if [ -e "/srv/projects/chili/$CHILI_ID/is_public" ] ; then
+		public=$(grep "true" "/srv/projects/chili/$CHILI_ID/is_public")
+	fi
+	if [ -n "$public" ] ; then
+		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => 'git:\/\/$vhost_domain\/,http:\/\/$vhost_domain\/git\/',/"  "$gitolite_init"
+	else
+		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => '',/"                                                       "$gitolite_init"
+	fi
+	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => 'git@$vhost_domain:,https:\/\/[user]@$vhost_domain\/git\/',/"     "$gitolite_init"
+
+
+
+	#enable chili in non-ssl vhost, if not forcing use of ssl vhost
+	local vhost_root=$(cat "/etc/nginx/sites-available/$VHOST_ID" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
+	local vhost_config="/etc/nginx/sites-available/$VHOST_ID"
+	
+	if [ "$FORCE_CHILI_SSL" != "1" ] && [ "$FORCE_CHILI_SSL" != "true" ] ; then
+		ln -s "/srv/projects/chili/$CHILI_ID/public"  "$vhost_root/$CHILI_ID"
+		nginx_add_passenger_uri_for_vhost "$vhost_config" "/$CHILI_ID"
+	fi
+
+
+	#enable chili and git project in ssl vhost
+	ssl_config="/etc/nginx/sites-available/$NGINX_SSL_ID"
+	if [ ! -e "$ssl_config" ] ; then
+		nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "/$CHILI_ID" "1"
+	fi
+	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
+	ln -s "/srv/projects/chili/$CHILI_ID/public"   "$ssl_root/$CHILI_ID"
+	nginx_add_passenger_uri_for_vhost "$ssl_config" "/$CHILI_ID"
+
+	
+
+	# setup nossl_include
+	nossl_include="$NGINX_CONF_PATH/${CHILI_ID}_${VHOST_ID}_chili.conf"
+	rm -rf "$nossl_include"
+	if [ "$FORCE_CHILI_SSL" = "1" ] || [ "$FORCE_CHILI_SSL" = "true" ] ; then
+		cat << EOF >>"$nossl_include"
+location ~ ^/$CHILI_ID/.*\$
+{
+	rewrite ^(.*)\$ https://\$host\$1 permanent;
+}
+EOF
+	fi
+	if [ "$CHILI_IS_ROOT" = "1" ] || [ "$CHILI_IS_ROOT" = "true" ]; then
+		cat << EOF >>"$nossl_include"
+location ~ ^/(index\..*)?$
+{
+	rewrite ^(.*)\$ /${CHILI_ID} permanent;
+}
+EOF
+	fi
+
+	if [ -e "$nossl_include" ] ; then
+		nginx_add_include_for_vhost "$vhost_config" "$nossl_include"
+	fi
+
+	/etc/init.d/nginx restart
+
+}
+
 
 
 function add_chili_project
@@ -371,76 +460,3 @@ EOF
 
 
 
-
-
-function enable_chili_for_vhost
-{
-	local VHOST_ID=$1
-	local CHILI_ID=$2
-	local FORCE_CHILI_SSL=$3
-	local CHILI_IS_ROOT=$4
-	
-
-	vhost_domain=$(echo $VHOST_ID | sed 's/^www\.//g')
-	gitolite_init="/srv/projects/chili/$CHILI_ID/vendor/plugins/redmine_git_hosting/init.rb"
-	public=""
-	if [ -e "/srv/projects/chili/$CHILI_ID/is_public" ] ; then
-		public=$(grep "true" "/srv/projects/chili/$CHILI_ID/is_public")
-	fi
-	if [ -n "$public" ] ; then
-		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => 'git:\/\/$vhost_domain\/,http:\/\/$vhost_domain\/git\/',/"  "$gitolite_init"
-	else
-		sed -i -e  "s/'readOnlyBaseUrl.*\$/'readOnlyBaseUrls' => '',/"                                                       "$gitolite_init"
-	fi
-	sed -i -e  "s/'developerBaseUrl.*\$/'developerBaseUrls' => 'git@$vhost_domain:,https:\/\/[user]@$vhost_domain\/git\/',/"     "$gitolite_init"
-
-
-
-	#enable chili in non-ssl vhost, if not forcing use of ssl vhost
-	local vhost_root=$(cat "/etc/nginx/sites-available/$VHOST_ID" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
-	vhost_config="/etc/nginx/sites-available/$VHOST_ID"
-	
-	if [ "$FORCE_CHILI_SSL" != "1" ] && [ "$FORCE_CHILI_SSL" != "true" ] ; then
-		ln -s "/srv/projects/chili/$CHILI_ID/public"  "$vhost_root/$CHILI_ID"
-		nginx_add_passenger_uri_for_vhost "$vhost_config" "/$CHILI_ID"
-	fi
-
-
-	#enable chili and git project in ssl vhost
-	ssl_config="/etc/nginx/sites-available/$NGINX_SSL_ID"
-	if [ ! -e "$ssl_config" ] ; then
-		nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "/$CHILI_ID" "1"
-	fi
-	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
-	ln -s "/srv/projects/chili/$CHILI_ID/public"   "$ssl_root/$CHILI_ID"
-	nginx_add_passenger_uri_for_vhost "$ssl_config" "/$CHILI_ID"
-
-	
-
-	# setup nossl_include
-	nossl_include="$NGINX_CONF_PATH/${CHILI_ID}_${VHOST_ID}_chili.conf"
-	rm -rf "$nossl_include"
-	if [ "$FORCE_CHILI_SSL" = "1" ] || [ "$FORCE_CHILI_SSL" = "true" ] ; then
-		cat << EOF >>"$nossl_include"
-location ~ ^/$CHILI_ID/.*\$
-{
-	rewrite ^(.*)\$ https://\$host\$1 permanent;
-}
-EOF
-	fi
-	if [ "$CHILI_IS_ROOT" = "1" ] || [ "$CHILI_IS_ROOT" = "true" ]; then
-		cat << EOF >>"$nossl_include"
-location ~ ^/(index\..*)?$
-{
-	rewrite ^(.*)\$ /${CHILI_ID} permanent;
-}
-EOF
-	fi
-
-	if [ -e "$nossl_include" ] ; then
-		nginx_add_include_for_vhost "$vhost_config" "$nossl_include"
-	fi
-
-	/etc/init.d/nginx restart
-
-}
