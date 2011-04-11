@@ -42,30 +42,37 @@ function install_chili_project
 
 	local curdir=$(pwd)
 	local chili_install_path=""
+	local chili_id=""
 	if [ -z "$CHILI_VHOST" ] && [ "$USE_SSL" == "0" ] ; then
 		echo "ERROR: You must specify a virtualhost and/or install to SSL Virtual Host\n";
 		return
 	elif [ -z "$CHILI_VHOST" ] ; then
 		#install to SSL VHOST
-		chili_install_path="/srv/www/$NGINX_SSL_ID/chili"
+		chili_id="chili"
+		chili_install_path="/srv/www/$NGINX_SSL_ID/$chili_id"
+		
 		chili_num=1
 		while [ -e "$chili_install_path" ] ; do
-			chili_install_path="/srv/www/$NGINX_SSL_ID/chili_$chili_num"
+			chili_id="chili_$chili_num"
+			chili_install_path="/srv/www/$NGINX_SSL_ID/$chili_id"
 			chili_num=$(( $chili_num + 1 ))
 		done
 	else
 		#install to VHOST
-		chili_install_path="/srv/www/$CHILI_VHOST/chili"
+		chili_id="chili"
+		chili_install_path="/srv/www/$CHILI_VHOST/$chili_id"
+
 		chili_num=1
 		while [ -e "$chili_install_path" ] ; do
-			chili_install_path="/srv/www/$CHILI_VHOST/chili_$chili_num"
+			chili_id="chili_$chili_num"
+			chili_install_path="/srv/www/$CHILI_VHOST/$chili_id"
 			chili_num=$(( $chili_num + 1 ))
 		done
 	fi
 
 
 	#create chili database
-	local db="$CHILI_ID"_rm
+	local db="chili_"$(randomString 10)
 	if [ "$DB_TYPE" = "mysql" ] && [ -n "$DB_PASSWORD"] ; then
 		gem install mysql
 		mysql_create_database "$DB_PASSWORD" "$db"
@@ -120,16 +127,16 @@ EOF
 	#SCM stuff
 	if [ "$SCM" = "git" ] ; then
 		create_git "$PROJ_ID" "$chili_install_path"
-		if [ "$is_public" = "true" ] ; then
+		if [ "$PROJ_IS_PUBLIC" = "true" ] ; then
 			touch "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
 			chmod -R 775 "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
 			chown -R git:www-data "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
 		fi
 
 	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
-		create_svn "$PROJ_ID" "$CHILI_ID" "$CHILI_ADMIN_PW" 
+		create_svn "$PROJ_ID" "$chili_id" "$CHILI_ADMIN_PW" 
 	else
-		echo "not implemented yet"
+		echo "ERROR: SCM \"$SCM\" not implemented"
 		return 1
 	fi
 
@@ -145,7 +152,7 @@ project = Project.create(
 					:name => "$PROJ_NAME",
 					:description => "",
 					:identifier => "$PROJ_ID",
-					:is_public =>$is_public
+					:is_public =>$PROJ_IS_PUBLIC
 					)
 EOF
 
@@ -264,7 +271,7 @@ EOF
 	ssl_config="/etc/nginx/sites-available/$NGINX_SSL_ID"
 	ssl_root=$(get_root_for_site_id "$ssl_config")
 
-	if [ -z "$CHILI_VHOST" ] ; then
+	if [ "$USE_SSL" != "0" ] ; then
 		#install to SSL VHOST
 		if [ "$SSL_VHOST_SUBDIR" = "" ] || [ "$SSL_VHOST_SUBDIR" = "." ] ; then
 			#set to root
@@ -282,8 +289,8 @@ EOF
 			ln -s "$chili_install_path" "$ssl_root/$SSL_VHOST_SUBDIR"
 			nginx_add_passenger_uri_for_vhost "$ssl_config" "/$SSL_VHOST_SUBDIR"
 		fi
-		
-	else
+	fi
+	if [ -n "$CHILI_VHOST" ] ; then
 		#install to VHOST
 		vhost_config="/etc/nginx/sites-available/$CHILI_VHOST"
 		vhost_root=$(get_root_for_site_id "$vhost_config")
@@ -305,21 +312,18 @@ EOF
 				nginx_add_passenger_uri_for_vhost "$vhost_config" "/$SSL_VHOST_SUBDIR"
 			fi
 		else
-			echo "tmp"
+			# setup nossl_include
+			nossl_include="$NGINX_CONF_PATH/${CHILI_VHOST}_${chili_id}.conf"
+			rm -rf "$nossl_include"
+			cat << EOF >>"$nossl_include"
+location ~ ^/$CHILI_ID/.*\$
+{
+	rewrite ^(.*)\$ https://\$host\$1 permanent;
+}
+EOF
+			nginx_add_include_for_vhost "$vhost_config" "$nossl_include"
 		fi
-
-
 	fi
-
-
-
-
-
-
-
-
-
-
 
 	/etc/init.d/nginx restart
 	
