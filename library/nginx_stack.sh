@@ -596,7 +596,7 @@ EOF
 
 function get_root_for_site_id
 {
-	VHOST_ID=shift
+	VHOST_ID=$1
 	echo $(cat "/etc/nginx/sites-available/$VHOST_ID" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
 }
 

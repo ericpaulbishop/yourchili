@@ -8,28 +8,28 @@
 function install_chili_project
 {
 	#arguments
-	local CHILI_VHOST=shift
-	local CHILI_VHOST_SUBDIR=shift
+	local CHILI_VHOST=$1 ; shift ;
+	local CHILI_VHOST_SUBDIR=$1 ; shift ;
 	
-	local USE_SSL=shift
-	local FORCE_SSL=shift
-	local SSL_VHOST_SUBDIR=shift
+	local USE_SSL=$1 ; shift ;
+	local FORCE_SSL=$1 ; shift ;
+	local SSL_VHOST_SUBDIR=$1 ; shift ;
 	
-	local DB_TYPE=shift		   # "mysql" or "postresql"	
-	local DB_PASSWORD=shift            # mysql root database password, necessary to create database if DB_TYPE=mysql
+	local DB_TYPE=$1 ; shift ;		   # "mysql" or "postresql"	
+	local DB_PASSWORD=$1 ; shift ;            # mysql root database password, necessary to create database if DB_TYPE=mysql
 
-	local CHILI_IS_PUBLIC=shift
-	local CHILI_ADMIN_USER=shift       #chili admin user name
-	local CHILI_ADMIN_PW=shift         #doubles as chili admin user pw & chili database pw
-	local CHILI_ADMIN_FIRST=shift      #first name of chili admin user
-	local CHILI_ADMIN_LAST=shift       #last name of chili admin user
-	local CHILI_ADMIN_EMAIL=shift      #email of chili admin user
+	local CHILI_IS_PUBLIC=$1 ; shift ;
+	local CHILI_ADMIN_USER=$1 ; shift ;       #chili admin user name
+	local CHILI_ADMIN_PW=$1 ; shift ;         #doubles as chili admin user pw & chili database pw
+	local CHILI_ADMIN_FIRST=$1 ; shift ;      #first name of chili admin user
+	local CHILI_ADMIN_LAST=$1 ; shift ;       #last name of chili admin user
+	local CHILI_ADMIN_EMAIL=$1 ; shift ;      #email of chili admin user
 
 
-	local SCM=shift                    #SCM to use, currently only "git" and "svn" are supported
-	local PROJ_ID=shift                #id for project being created, this will appear in SCM URLs
-	local PROJ_IS_PUBLIC=shift         #is this project publicly visible?  Can anyone grab the code?
-	local PROJ_NAME=shift              #project name, as it will appear in chili
+	local SCM=$1 ; shift ;                    #SCM to use, currently only "git" and "svn" are supported
+	local PROJ_ID=$1 ; shift ;                #id for project being created, this will appear in SCM URLs
+	local PROJ_IS_PUBLIC=$1 ; shift ;         #is this project publicly visible?  Can anyone grab the code?
+	local PROJ_NAME=$1 ; shift ;              #project name, as it will appear in chili
 
 
 

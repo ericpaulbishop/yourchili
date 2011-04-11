@@ -90,10 +90,10 @@ EOF
 
 function create_git
 {
-	local PROJ_ID=shift
+	local PROJ_ID=$1 ; shift ;
 	
 	#optional -- only if we need to set up a post-recieve chiliproject hook
-	local CHILI_INSTALL_PATH=shift
+	local CHILI_INSTALL_PATH=$1 ; shift ;
 
 	
 	local curdir=$(pwd)
