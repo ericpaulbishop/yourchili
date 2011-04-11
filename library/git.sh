@@ -91,11 +91,10 @@ EOF
 function create_git
 {
 	local PROJ_ID=$1
+	
+	#optional -- only if we need to set up a post-recieve redmine hook
 	local REDMINE_ID=$2
-	local REDMINE_ADMIN_PW=$3
-	local FORCE_SSL_AUTH="$4"
 
-	local db="$REDMINE_ID"_rm
 	
 	local curdir=$(pwd)
 
@@ -103,6 +102,7 @@ function create_git
 	#does nothing if git/gitolite is already installed
 	git_install
 	gitolite_install
+
 
 	#create git repository
 	mkdir -p "/srv/git/repositories/$PROJ_ID.git"
@@ -112,91 +112,19 @@ function create_git
 	chown -R git:www-data /srv/git/repositories/
 
 	
-
-	#install and configure grack
-	mkdir -p "/srv/git/grack/"
-	cd "/srv/git/grack/"
-	git clone "https://github.com/ericpaulbishop/grack.git" 
-	rm -rf "grack/.git"
-	mv grack "$PROJ_ID"
-	mkdir "$PROJ_ID/public"
-	mkdir "$PROJ_ID/tmp"
-	escaped_proj_root=$(echo "/srv/git/repositories/$PROJ_ID.git" | sed 's/\//\\\//g')
-	sed -i -e  "s/project_root.*\$/project_root => \"$escaped_proj_root\",/"             "$PROJ_ID/config.ru"
-	sed -i -e  "s/use_redmine_auth.*=>.*\$/use_redmine_auth      => true,/"                  "$PROJ_ID/config.ru"
-	sed -i -e  "s/redmine_db_type.*\$/redmine_db_type       => \"Mysql\",/"              "$PROJ_ID/config.ru"
-	sed -i -e  "s/redmine_db_host.*\$/redmine_db_host       => \"localhost\",/"          "$PROJ_ID/config.ru"
-	sed -i -e  "s/redmine_db_name.*\$/redmine_db_name       => \"$db\",/"                "$PROJ_ID/config.ru"
-	sed -i -e  "s/redmine_db_user.*\$/redmine_db_user       => \"$db\",/"                "$PROJ_ID/config.ru"
-	sed -i -e  "s/redmine_db_pass.*\$/redmine_db_pass       => \"$REDMINE_ADMIN_PW\",/"  "$PROJ_ID/config.ru"
-	if [ "$FORCE_SSL_AUTH" = "1" ] ; then
-		sed -i -e  "s/require_ssl_for_auth.*\$/require_ssl_for_auth  => true,/"      "$PROJ_ID/config.ru"
-	else
-		sed -i -e  "s/require_ssl_for_auth.*\$/require_ssl_for_auth  => false,/"     "$PROJ_ID/config.ru"
-	fi
-	chown -R www-data:www-data /srv/git/grack
-
-
-	#post-receive hook
-	pr_file="/srv/git/repositories/$PROJ_ID.git/hooks/post-receive"
-	cat << EOF > "$pr_file"
-	cd "/srv/projects/chili/$REDMINE_ID"
-	ruby script/runner "Repository.fetch_changesets" -e production
+	if [ -n "$REDMINE_ID" ] ; then
+		#post-receive hook
+		pr_file="/srv/git/repositories/$PROJ_ID.git/hooks/post-receive"
+		cat << EOF > "$pr_file"
+cd "/srv/projects/chili/$REDMINE_ID"
+ruby script/runner "Repository.fetch_changesets" -e production
 EOF
 
-	chmod    775 "$pr_file"
-	chown git:www-data "$pr_file"
+		chmod    775 "$pr_file"
+		chown git:www-data "$pr_file"
+	fi
 
 	cd "$curdir"
-
-}
-
-function enable_git_for_vhost
-{
-	local VHOST_ID=$1
-	local PROJ_ID=$2
-	local FORCE_GIT_SSL=$3
-
-	#enable git in non-ssl vhost, if not forcing use of ssl vhost
-	local vhost_root=$(cat "/etc/nginx/sites-available/$VHOST_ID" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
-	vhost_config="/etc/nginx/sites-available/$VHOST_ID"
-	
-	if [ "$FORCE_GIT_SSL" != "1" ] && [ "$FORCE_GIT_SSL" != "true" ] ; then
-		mkdir -p "$vhost_root/git"
-		ln -s "/srv/git/grack/$PROJ_ID/public"  "$vhost_root/git/$PROJ_ID.git"
-		nginx_add_passenger_uri_for_vhost "$vhost_config" "/git/$PROJ_ID.git"
-	fi
-
-
-	#enable git and git project in ssl vhost
-	ssl_config="/etc/nginx/sites-available/$NGINX_SSL_ID"
-	if [ ! -e "$ssl_config" ] ; then
-		nginx_create_site "$NGINX_SSL_ID" "localhost" "1" "/git/$PROJ_ID.git" "1"
-	fi
-	local ssl_root=$(cat "/etc/nginx/sites-available/$NGINX_SSL_ID" | grep -P "^[\t ]*root" | awk ' { print $2 } ' | sed 's/;.*$//g')
-	mkdir -p "$ssl_root/git"
-	ln -s "/srv/git/grack/$PROJ_ID/public"   "$ssl_root/git/$PROJ_ID.git"
-	nginx_add_passenger_uri_for_vhost "$ssl_config" "/git/$PROJ_ID.git"
-
-
-	#if forcing ssl, create conf file that configures this to include
-	nossl_include="$NGINX_CONF_PATH/${PROJ_ID}_${VHOST_ID}_git.conf"
-	rm -rf "$nossl_conf"
-	if [ "$FORCE_GIT_SSL" = "1" ] || [ "$FORCE_GIT_SSL" = "true" ] ; then
-		cat << EOF >>"$nossl_include"
-location ~ ^/$PROJ_ID/.*\$
-{
-	rewrite ^(.*)\$ https://\$host\$1 permanent;
-}
-EOF
-	fi
-
-	if [ -e "$nossl_include" ] ; then
-		nginx_add_include_for_vhost "$vhost_config" "$nossl_include"
-	fi
-
-	/etc/init.d/nginx restart
-
 
 }
 
