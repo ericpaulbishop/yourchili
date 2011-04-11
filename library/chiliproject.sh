@@ -33,23 +33,24 @@ function install_chili_project
 
 
 
-
-	local curdir=$(pwd)
+	CHILI_VHOST_SUBDIR=$(echo "$CHILI_VHOST_SUBDIR" | sed 's/^\///g')
+	SSL_VHOST_SUBDIR=$(echo "$SSL_VHOST_SUBDIR" | sed 's/^\///g')
 
 	gem install -v=0.4.2 i18n
 	gem install -v=2.3.5 rails
 
 
+	local curdir=$(pwd)
 	local chili_install_path=""
 	if [ -z "$CHILI_VHOST" ] && [ "$USE_SSL" == "0" ] ; then
 		echo "ERROR: You must specify a virtualhost and/or install to SSL Virtual Host\n";
 		return
 	elif [ -z "$CHILI_VHOST" ] ; then
 		#install to SSL VHOST
-		chili_install_path="/srv/www/nginx_ssl/chili"
+		chili_install_path="/srv/www/$NGINX_SSL_ID/chili"
 		chili_num=1
 		while [ -e "$chili_install_path" ] ; do
-			chili_install_path="/srv/www/nginx_ssl/chili_$chili_num"
+			chili_install_path="/srv/www/$NGINX_SSL_ID/chili_$chili_num"
 			chili_num=$(( $chili_num + 1 ))
 		done
 	else
@@ -260,13 +261,88 @@ EOF
 
 
 	#configure symlinks/vhosts
-	
+	ssl_config="/etc/nginx/sites-available/$NGINX_SSL_ID"
+	ssl_root=$(get_root_for_site_id "$ssl_config")
+
+	if [ -z "$CHILI_VHOST" ] ; then
+		#install to SSL VHOST
+		if [ "$SSL_VHOST_SUBDIR" = "" ] || [ "$SSL_VHOST_SUBDIR" = "." ] ; then
+			#set to root
+			#note: invoking perl like this is like sed, but better, cuz' it handles tabs properly
+			perl -pi -e 's/^[\t ]*passenger_base_uri[\t ]+.*$//g'                      $ssl_config
+			perl -pi -e 's/^.*passenger_enabled[\t ]+.*$/\tpassenger_enabled   on;/g'  $ssl_config
+			rm -rf $ssl_root
+			ln -s "$chili_install_path" "$ssl_root"
+		else
+			#make intermediate subdirectories
+			mkdir -p "$ssl_root/$SSL_VHOST_SUBDIR"
+			rm -rf "$ssl_root/$SSL_VHOST_SUBDIR"
+
+			#create symlink
+			ln -s "$chili_install_path" "$ssl_root/$SSL_VHOST_SUBDIR"
+			nginx_add_passenger_uri_for_vhost "$ssl_config" "/$SSL_VHOST_SUBDIR"
+		fi
+		
+	else
+		#install to VHOST
+		vhost_config="/etc/nginx/sites-available/$CHILI_VHOST"
+		vhost_root=$(get_root_for_site_id "$vhost_config")
+		if [ "$CHILI_FORCE_SSL" != "1" ] ; then
+			if [ "$CHILI_VHOST_SUBDIR" = "" ] || [ "$CHILI_VHOST_SUBDIR" = "." ] ; then
+				#set to root
+				#note: invoking perl like this is like sed, but better, cuz' it handles tabs properly
+				perl -pi -e 's/^[\t ]*passenger_base_uri[\t ]+.*$//g'                       $vhost_config
+				perl -pi -e 's/^.*passenger_enabled[\t ]+.*$/\tpassenger_enabled   on;/g'   $vhost_config
+				rm -rf $vhost_root
+				ln -s "$chili_install_path" "$vhost_root"
+			else
+				#make intermediate subdirectories
+				mkdir -p "$vhost_root/$SSL_VHOST_SUBDIR"
+				rm -rf "$vhost_root/$SSL_VHOST_SUBDIR"
+
+				#create symlink
+				ln -s "$chili_install_path" "$vhost_root/$SSL_VHOST_SUBDIR"
+				nginx_add_passenger_uri_for_vhost "$vhost_config" "/$SSL_VHOST_SUBDIR"
+			fi
+		else
+			echo "tmp"
+		fi
+
+
+	fi
+
+
+
+
+
+
+
+
+
+
 
 	/etc/init.d/nginx restart
 	
 	cd "$curdir"
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
