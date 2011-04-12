@@ -428,11 +428,19 @@ function nginx_set_rails_as_vhost_root
 	local RAILS_PATH=$1 ; shift
 
 	local vhost_config="/etc/nginx/sites-available/$VHOST"
+	local rails_public_path="$RAILS_PATH/public"
+	local rails_public_escaped_path=$(echo "$rails_public_path"   | sed 's/\//\\\//g')
+	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\./\\./g')
+	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\-/\\-/g')
+	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\$/\\$/g')
+	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\^/\\^/g')
+
+	
 
 	#note: invoking perl like this is like sed, but better, cuz' it handles tabs properly
-	perl -pi -e 's/^[\t ]*passenger_base_uri[\t ]+.*$//g'                      $vhost_config
-	perl -pi -e 's/^.*passenger_enabled[\t ]+.*$/\tpassenger_enabled   on;/g'  $vhost_config
-	perl -pi -e "s/[\t ]*root[\t ]+.*$/\troot                 $RAILS_PATH/public;"  $vhost_config
+	perl -pi -e 's/^[\t ]*passenger_base_uri[\t ]+.*$//g'                                  $vhost_config
+	perl -pi -e 's/^.*passenger_enabled[\t ]+.*$/\tpassenger_enabled   on;/g'              $vhost_config
+	perl -pi -e "s/[\t ]*root[\t ]+.*$/\troot                 $rails_public_escaped_path;" $vhost_config
 }
 
 function nginx_install 
