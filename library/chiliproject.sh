@@ -269,7 +269,7 @@ EOF
 
 	#configure symlinks/vhosts
 	ssl_config="/etc/nginx/sites-available/$NGINX_SSL_ID"
-	ssl_root=$(get_root_for_site_id "$ssl_config")
+	ssl_root=$(get_root_for_site_id "$NGINX_SSL_ID")
 
 	if [ "$USE_SSL" != "0" ] ; then
 		#install to SSL VHOST
@@ -293,7 +293,7 @@ EOF
 	if [ -n "$CHILI_VHOST" ] ; then
 		#install to VHOST
 		vhost_config="/etc/nginx/sites-available/$CHILI_VHOST"
-		vhost_root=$(get_root_for_site_id "$vhost_config")
+		vhost_root=$(get_root_for_site_id "$CHILI_VHOST")
 		if [ "$CHILI_FORCE_SSL" != "1" ] ; then
 			if [ "$CHILI_VHOST_SUBDIR" = "" ] || [ "$CHILI_VHOST_SUBDIR" = "." ] ; then
 				#set to root
