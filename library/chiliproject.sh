@@ -74,16 +74,16 @@ function install_chili_project
 	#create chili database
 	local db="chili_"$(randomString 10)
 	if [ "$DB_TYPE" = "mysql" ] && [ -n "$DB_PASSWORD"] ; then
-		gem install mysql
 		mysql_create_database "$DB_PASSWORD" "$db"
 		mysql_create_user     "$DB_PASSWORD" "$db" "$CHILI_ADMIN_PW"
 		mysql_grant_user      "$DB_PASSWORD" "$db" "$db"
+		gem install mysql
 	else
-		gem install pg
 		postgresql_install         #be sure it's installed
 		postgresql_create_database "$db"
 		postgresql_create_user     "$db" "$CHILI_ADMIN_PW"
 		postgresql_grant_user      "$db" "$db"
+		gem install pg
 	fi
 
 
