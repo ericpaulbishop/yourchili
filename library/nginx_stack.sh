@@ -503,11 +503,11 @@ function nginx_install
 	tar -xzvf "nginx-$NGINX_VER.tar.gz"
 
 	#Camouflage NGINX Server Version String....
-	perl -pi -e "s/\"Server:.*CRLF/\"Server: $NGINX_SERVER_STRING\" CRLF/g"   "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
-	perl -pi -e "s/\"Server:[\t ]+nginx\"/\"Server: $NGINX_SERVER_STRING\"/g" "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
+	perl -pi -e "s/\"Server:.*CRLF/\"Server: $NGINX_SERVER_STRING\" CRLF/g"                "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
+	perl -pi -e "s/\"Server:[\t ]+nginx\"/\"Server: $NGINX_SERVER_STRING\"/g"              "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
 	
 	#Don't inform user of what server is running when responding with an error code
-	perl -pi -e "s/\<hr\>\<center\>.*<\/center\>/<hr><center>Server Response<\/center>/g" nginx-adj/src/http/ngx_http_special_response.c
+	perl -pi -e "s/\<hr\>\<center\>.*<\/center\>/<hr><center>Server Response<\/center>/g"  "nginx-$NGINX_VER/src/http/ngx_http_special_response.c"
 
 
 	#maek eet
