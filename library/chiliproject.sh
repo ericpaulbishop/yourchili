@@ -275,18 +275,14 @@ EOF
 		#install to SSL VHOST
 		if [ "$SSL_VHOST_SUBDIR" = "" ] || [ "$SSL_VHOST_SUBDIR" = "." ] ; then
 			#set to root
-			#note: invoking perl like this is like sed, but better, cuz' it handles tabs properly
-			perl -pi -e 's/^[\t ]*passenger_base_uri[\t ]+.*$//g'                      $ssl_config
-			perl -pi -e 's/^.*passenger_enabled[\t ]+.*$/\tpassenger_enabled   on;/g'  $ssl_config
-			rm -rf $ssl_root
-			ln -s "$chili_install_path" "$ssl_root"
+			nginx_set_rails_as_vhost_root "$NGINX_SSL_ID" "$chili_install_path/public"
 		else
 			#make intermediate subdirectories
 			mkdir -p "$ssl_root/$SSL_VHOST_SUBDIR"
 			rm -rf "$ssl_root/$SSL_VHOST_SUBDIR"
 
 			#create symlink
-			ln -s "$chili_install_path" "$ssl_root/$SSL_VHOST_SUBDIR"
+			ln -s "$chili_install_path/public" "$ssl_root/$SSL_VHOST_SUBDIR"
 			nginx_add_passenger_uri_for_vhost "$ssl_config" "/$SSL_VHOST_SUBDIR"
 		fi
 	fi
@@ -297,19 +293,15 @@ EOF
 		if [ "$CHILI_FORCE_SSL" != "1" ] ; then
 			if [ "$CHILI_VHOST_SUBDIR" = "" ] || [ "$CHILI_VHOST_SUBDIR" = "." ] ; then
 				#set to root
-				#note: invoking perl like this is like sed, but better, cuz' it handles tabs properly
-				perl -pi -e 's/^[\t ]*passenger_base_uri[\t ]+.*$//g'                       $vhost_config
-				perl -pi -e 's/^.*passenger_enabled[\t ]+.*$/\tpassenger_enabled   on;/g'   $vhost_config
-				rm -rf $vhost_root
-				ln -s "$chili_install_path" "$vhost_root"
+				nginx_set_rails_as_vhost_root "$CHILI_VHOST" "$chili_install_path/public"
 			else
 				#make intermediate subdirectories
-				mkdir -p "$vhost_root/$SSL_VHOST_SUBDIR"
-				rm -rf "$vhost_root/$SSL_VHOST_SUBDIR"
+				mkdir -p "$vhost_root/$CHILI_VHOST_SUBDIR"
+				rm -rf "$vhost_root/$CHILI_VHOST_SUBDIR"
 
 				#create symlink
-				ln -s "$chili_install_path" "$vhost_root/$SSL_VHOST_SUBDIR"
-				nginx_add_passenger_uri_for_vhost "$vhost_config" "/$SSL_VHOST_SUBDIR"
+				ln -s "$chili_install_path" "$vhost_root/$CHILI_VHOST_SUBDIR"
+				nginx_add_passenger_uri_for_vhost "$vhost_config" "/$CHILI_VHOST_SUBDIR"
 			fi
 		else
 			# setup nossl_include

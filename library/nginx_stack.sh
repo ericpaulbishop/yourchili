@@ -422,7 +422,18 @@ function nginx_add_include_for_vhost
 	mv "$VHOST_CONFIG_FILE.tmp" "$VHOST_CONFIG_FILE"
 }
 
+function nginx_set_rails_as_vhost_root
+{
+	local VHOST=$1 ; shift
+	local RAILS_PATH=$1 ; shift
 
+	local vhost_config="/etc/nginx/sites-available/$VHOST"
+
+	#note: invoking perl like this is like sed, but better, cuz' it handles tabs properly
+	perl -pi -e 's/^[\t ]*passenger_base_uri[\t ]+.*$//g'                      $vhost_config
+	perl -pi -e 's/^.*passenger_enabled[\t ]+.*$/\tpassenger_enabled   on;/g'  $vhost_config
+	perl -pi -e "s/[\t ]*root[\t ]+.*$/\troot                 $RAILS_PATH/public;"  $vhost_config
+}
 
 function nginx_install 
 {
@@ -604,6 +615,8 @@ function get_domain_for_site_id
 {
 	echo $(cat "/etc/nginx/sites-available/$1" | grep server_name | sed 's/;//g' | awk ' {print $2} ')
 }
+
+
 
 
 #################################################################################
