@@ -72,7 +72,7 @@ function install_chili_project
 
 
 	#create chili database
-	local db="chili_"$(randomString 10)
+	local db="chili_"$(randomString 10 | tr "[:upper:]" "[:lower:]")
 	if [ "$DB_TYPE" = "mysql" ] && [ -n "$DB_PASSWORD"] ; then
 		mysql_create_database "$DB_PASSWORD" "$db"
 		mysql_create_user     "$DB_PASSWORD" "$db" "$CHILI_ADMIN_PW"
