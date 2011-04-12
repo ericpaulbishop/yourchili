@@ -503,8 +503,11 @@ function nginx_install
 	tar -xzvf "nginx-$NGINX_VER.tar.gz"
 
 	#Camouflage NGINX Server Version String....
-	cat "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c" | sed "s/\"Server: nginx\"/\"Server: $NGINX_SERVER_STRING\"/g" > /tmp/ngx_h1.tmp
-	cat /tmp/ngx_h1.tmp | sed "s/\"Server: \".*NGINX_VER/\"Server: $NGINX_SERVER_STRING\"/g" > "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
+	perl -pi -e "s/\"Server:.*CRLF/\"Server: $NGINX_SERVER_STRING\" CRLF/g"   "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
+	perl -pi -e "s/\"Server:[\t ]+nginx\"/\"Server: $NGINX_SERVER_STRING\"/g" "nginx-$NGINX_VER/src/http/ngx_http_header_filter_module.c"
+	
+	#Don't inform user of what server is running when responding with an error code
+	perl -pi -e "s/\<hr\>\<center\>.*<\/center\>/<hr><center>Server Response<\/center>/g" nginx-adj/src/http/ngx_http_special_response.c
 
 
 	#maek eet
