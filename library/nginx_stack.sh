@@ -440,7 +440,7 @@ function nginx_set_rails_as_vhost_root
 	#note: invoking perl like this is like sed, but better, cuz' it handles tabs properly
 	perl -pi -e 's/^[\t ]*passenger_base_uri[\t ]+.*$//g'                                  $vhost_config
 	perl -pi -e 's/^.*passenger_enabled[\t ]+.*$/\tpassenger_enabled   on;/g'              $vhost_config
-	perl -pi -e "s/[\t ]*root[\t ]+.*$/\troot                 $rails_public_escaped_path;" $vhost_config
+	perl -pi -e "s/[\t ]*root[\t ]+.*$/\troot                 $rails_public_escaped_path;/g" $vhost_config
 }
 
 function nginx_install 
