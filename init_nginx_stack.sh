@@ -38,7 +38,10 @@ add_user "$USER" "$USER_PW" "1"
 
 #install mysql, let it use up to 30% of memory
 mysql_install "$DB_PASSWORD"
-mysql_tune 30
+mysql_tune 20
+
+postgresql_install 
+postgresql_tune 20
 
 #install nginx, along with both passenger(ruby), php and perl
 nginx_install "$NGINX_USER" "$NGINX_GROUP" "1" "1" "1"
