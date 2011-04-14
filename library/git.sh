@@ -20,13 +20,13 @@ function gitolite_install
 		
 		#make sure root has a pubkey
 		if [ ! -e /root/.ssh/id_rsa ] ; then
-			rm -rf /root/.ssh/id_rsa*
-			printf "/root/.ssh/id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P "" 
+			rm -rf /root/.ssh/gitolite_admin_id_rsa*
+			rm -rf /root/.ssh/git_user_id_rsa*
+			printf "/root/.ssh/gitolite_admin_id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P "" 
+			printf "/root/.ssh/git_user_id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P "" 
 		fi
 		
 		#create git user
-		mkdir -p /srv/git
-		chmod -R 755 /srv/git/repositories
 		adduser \
 			--system \
 			--shell /bin/sh \
@@ -35,11 +35,14 @@ function gitolite_install
 			--disabled-password \
 			--home /srv/git \
 			git
-		chown -R git:www-data /srv/git
+		if [ ! -d /srv/git ]
+			mkdir -p /srv/git
+			chown git:www-data /srv/git
+		fi
 
 		#install gitolite
 		local curdir=$(pwd)
-		cp /root/.ssh/id_rsa.pub /tmp/root.pub
+		cp /root/.ssh/gitolite_admin_id_rsa.pub /tmp/gitolite_admin_id_rsa.pub
 		cd /tmp
 		git clone git://github.com/sitaramc/gitolite.git
 		cd gitolite
@@ -47,7 +50,13 @@ function gitolite_install
 		mkdir -p /usr/local/share/gitolite/conf /usr/local/share/gitolite/hooks /srv/git/repositories
 		src/gl-system-install /usr/local/bin /usr/local/share/gitolite/conf /usr/local/share/gitolite/hooks
 		chown -R git:www-data /srv/git
-		su git -c "gl-setup -q /tmp/root.pub"
+		su git -c "gl-setup -q /tmp/gitolite_admin_id_rsa.pub"
+
+		#authorize special ssh key to be able to login as git user (useful for using ssh to run commands necessray for smart http)
+		cat /srv/git/.ssh/authorized_keys /root/.ssh/git_user_id_rsa.pub >/srv/git/.ssh/new_auth
+		mv /srv/git/.ssh/new_auth /srv/git/.ssh/authorized_keys
+		chown git:www-data /srv/git/.ssh/authorized_keys
+		chmod 600 /srv/git/.ssh/authorized_keys
 
 
 		#install git daemon
