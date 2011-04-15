@@ -234,10 +234,10 @@ EOF
 		cd redmine_git_hosting
 		rm -rf .git
 		escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
-		sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                              "init.rb"
+		sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
 		sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/gitolite_admin_id_rsa',/"   "init.rb"
-		sed -i -e  "s/'gitUserIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/git_user_id_rsa',/"   "init.rb"
-		sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                "init.rb"
+		sed -i -e  "s/'gitUserIdentityFile.*\$/'gitUserIdentityFile'   => '$escaped_chili_install_path\/.ssh\/git_user_id_rsa',/"         "init.rb"
+		sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                               "init.rb"
 		cp -r /root/.ssh "$chili_install_path"
 		chown -R www-data:www-data "$chili_install_path"
 		chmod 600 "$chili_install_path/.ssh/"*rsa*
