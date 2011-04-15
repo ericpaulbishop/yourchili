@@ -35,7 +35,7 @@ function gitolite_install
 			--disabled-password \
 			--home /srv/git \
 			git
-		if [ ! -d /srv/git ]
+		if [ ! -d /srv/git ] ; then
 			mkdir -p /srv/git
 			chown git:www-data /srv/git
 		fi
