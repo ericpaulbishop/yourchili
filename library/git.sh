@@ -58,18 +58,24 @@ function gitolite_install
 
 		#remove testing repo
 		cd /tmp
+		cat << 'EOF' > "/tmp/git_env_ssh"
+#!/bin/bash
+exec ssh -o stricthostkeychecking=no -i /root/.ssh/gitolite_admin_id_rsa \"$@\"
+EOF
+		chmod 777 "/tmp/git_env_ssh"
 		rm -rf gitolite-admin
-		sudo su -c "git clone git@localhost:gitolite-admin.git"
+		env GIT_SSH="/tmp/git_env_ssh" git clone git@localhost:gitolite-admin.git
 		cd gitolite-admin
 		local testing_line=$(cat conf/gitolite.conf | grep -n "repo.*testing" | sed 's/:.*$//g')
 		if [ -n "$testing_line" ] ; then
 			head -n $(( $testing_line - 1 )) conf/gitolite.conf > conf/gitolite.tmp
 			mv conf/gitolite.tmp conf/gitolite.conf
-			sudo su -c "git commit -a -m \"add project $PROJ_ID\""
-			sudo su -c "git push"
+			git commit -a -m "add project $PROJ_ID"
+			env GIT_SSH="/tmp/git_env_ssh" git push
 		fi
 		rm -rf /srv/git/repositories/testing.git
 		cd /tmp
+		rm -rf /tmp/git_env_ssh
 		rm -rf gitolite-admin
 
 
@@ -140,8 +146,13 @@ function create_git
 
 	#create git repository
 	cd /tmp
+	cat << 'EOF' > "/tmp/git_env_ssh"
+#!/bin/bash
+exec ssh -o stricthostkeychecking=no -i /root/.ssh/gitolite_admin_id_rsa \"$@\"
+EOF
+	chmod 777 "/tmp/git_env_ssh"
 	rm -rf gitolite-admin
-	sudo su -c "git clone git@localhost:gitolite-admin.git"
+	env GIT_SSH="/tmp/git_env_ssh" git clone git@localhost:gitolite-admin.git
 	cd gitolite-admin
 	echo ""                                          >>conf/gitolite.conf
 	echo "repo    $PROJ_ID"                          >>conf/gitolite.conf
@@ -149,10 +160,11 @@ function create_git
 	if [ -n "$PROJ_IS_PUBLIC" ] ; then
 		echo "        R     =   daemon"          >>conf/gitolite.conf
 	fi
-	sudo su -c "git commit -a -m \"add project $PROJ_ID\""
-	sudo su -c "git push"
+	git commit -a -m \"add project $PROJ_ID\"
+	env GIT_SSH="/tmp/git_env_ssh" git push
 	cd /tmp
 	rm -rf gitolite-admin
+	rm -rf "/tmp/git_env_ssh"
 
 	
 	if [ -n "$CHILI_INSTALL_PATH" ] ; then
