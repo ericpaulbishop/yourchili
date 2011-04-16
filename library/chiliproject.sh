@@ -126,13 +126,7 @@ EOF
 
 	#SCM stuff
 	if [ "$SCM" = "git" ] ; then
-		create_git "$PROJ_ID" "$chili_install_path"
-		if [ "$PROJ_IS_PUBLIC" = "true" ] ; then
-			touch "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-			chmod -R 775 "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-			chown -R git:www-data "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-		fi
-
+		create_git "$PROJ_ID""$PROJ_IS_PUBLIC" "$chili_install_path"
 	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
 		create_svn "$PROJ_ID" "$chili_id" "$CHILI_ADMIN_PW" 
 	else
