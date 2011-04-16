@@ -160,7 +160,7 @@ EOF
 	if [ -n "$PROJ_IS_PUBLIC" ] ; then
 		echo "        R     =   daemon"          >>conf/gitolite.conf
 	fi
-	git commit -a -m \"add project $PROJ_ID\"
+	git commit -a -m "add project $PROJ_ID"
 	env GIT_SSH="/tmp/git_env_ssh" git push
 	cd /tmp
 	rm -rf gitolite-admin
