@@ -60,9 +60,9 @@ function gitolite_install
 		cd /tmp
 		cat << 'EOF' > "/tmp/git_env_ssh"
 #!/bin/bash
-exec ssh -o stricthostkeychecking=no -i /root/.ssh/gitolite_admin_id_rsa \"$@\"
+exec ssh -o stricthostkeychecking=no -i /root/.ssh/gitolite_admin_id_rsa "$@"
 EOF
-		chmod 777 "/tmp/git_env_ssh"
+		chmod 700 "/tmp/git_env_ssh"
 		rm -rf gitolite-admin
 		env GIT_SSH="/tmp/git_env_ssh" git clone git@localhost:gitolite-admin.git
 		cd gitolite-admin
@@ -148,9 +148,9 @@ function create_git
 	cd /tmp
 	cat << 'EOF' > "/tmp/git_env_ssh"
 #!/bin/bash
-exec ssh -o stricthostkeychecking=no -i /root/.ssh/gitolite_admin_id_rsa \"$@\"
+exec ssh -o stricthostkeychecking=no -i /root/.ssh/gitolite_admin_id_rsa "$@"
 EOF
-	chmod 777 "/tmp/git_env_ssh"
+	chmod 700 "/tmp/git_env_ssh"
 	rm -rf gitolite-admin
 	env GIT_SSH="/tmp/git_env_ssh" git clone git@localhost:gitolite-admin.git
 	cd gitolite-admin
