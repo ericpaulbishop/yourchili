@@ -23,7 +23,11 @@ function gitolite_install
 			rm -rf /root/.ssh/gitolite_admin_id_rsa*
 			rm -rf /root/.ssh/git_user_id_rsa*
 			printf "/root/.ssh/gitolite_admin_id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P "" 
-			printf "/root/.ssh/git_user_id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P "" 
+			printf "/root/.ssh/git_user_id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P ""
+			
+			#give root gitolite admin priviledges
+			ln -s /root/.ssh/gitolite_admin_id_rsa /root/.ssh/id_rsa 
+			ln -s /root/.ssh/gitolite_admin_id_rsa.pub /root/.ssh/id_rsa.pub
 		fi
 		
 		#create git user
@@ -52,7 +56,25 @@ function gitolite_install
 		chown -R git:www-data /srv/git
 		su git -c "gl-setup -q /tmp/gitolite_admin_id_rsa.pub"
 
-		#authorize special ssh key to be able to login as git user (useful for using ssh to run commands necessray for smart http)
+		#remove testing repo
+		cd /tmp
+		rm -rf gitolite-admin
+		sudo su -c "git clone git@localhost:gitolite-admin.git"
+		cd gitolite-admin
+		local testing_line=$(cat conf/gitolite.conf | grep -n "repo.*testing" | sed 's/:.*$//g')
+		if [ -n "$testing_line" ] ; then
+			head -n $(( $testing_line - 1 )) conf/gitolite.conf > conf/gitolite.tmp
+			mv conf/gitolite.tmp conf/gitolite.conf
+			sudo su -c "git commit -a -m \"add project $PROJ_ID\""
+			sudo su -c "git push"
+		fi
+		rm -rf /srv/git/repositories/testing.git
+		cd /tmp
+		rm -rf gitolite-admin
+
+
+
+		#authorize special git_user_id_rsa ssh key to be able to login as git user (useful for using ssh to run commands necessray for smart http)
 		cat /srv/git/.ssh/authorized_keys /root/.ssh/git_user_id_rsa.pub >/srv/git/.ssh/new_auth
 		mv /srv/git/.ssh/new_auth /srv/git/.ssh/authorized_keys
 		chown git:www-data /srv/git/.ssh/authorized_keys
@@ -94,13 +116,16 @@ EOF
 		update-rc.d git-daemon defaults
 		/etc/init.d/git-daemon start
 
+		cd "$curdir"
+
 	fi
 }
 
 function create_git
 {
 	local PROJ_ID=$1 ; shift ;
-	
+	local PROJ_IS_PUBLIC=$1 ; shift ;
+
 	#optional -- only if we need to set up a post-recieve chiliproject hook
 	local CHILI_INSTALL_PATH=$1 ; shift ;
 
@@ -114,11 +139,20 @@ function create_git
 
 
 	#create git repository
-	mkdir -p "/srv/git/repositories/$PROJ_ID.git"
-	cd "/srv/git/repositories/$PROJ_ID.git"
-	git init --bare
-	chmod -R 775 /srv/git/repositories/
-	chown -R git:www-data /srv/git/repositories/
+	cd /tmp
+	rm -rf gitolite-admin
+	sudo su -c "git clone git@localhost:gitolite-admin.git"
+	cd gitolite-admin
+	echo ""                                          >>conf/gitolite.conf
+	echo "repo    $PROJ_ID"                          >>conf/gitolite.conf
+	echo "        RW+     =   gitolite_admin_id_rsa" >>conf/gitolite.conf
+	if [ -n "$PROJ_IS_PUBLIC" ] ; then
+		echo "        R     =   daemon"          >>conf/gitolite.conf
+	fi
+	sudo su -c "git commit -a -m \"add project $PROJ_ID\""
+	sudo su -c "git push"
+	cd /tmp
+	rm -rf gitolite-admin
 
 	
 	if [ -n "$CHILI_INSTALL_PATH" ] ; then

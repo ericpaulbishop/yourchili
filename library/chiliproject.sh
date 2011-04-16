@@ -15,7 +15,7 @@ function install_chili_project
 	local FORCE_SSL=$1 ; shift ;
 	local SSL_VHOST_SUBDIR=$1 ; shift ;
 	
-	local DB_TYPE=$1 ; shift ;		   # "mysql" or "postresql"	
+	local DB_TYPE=$1 ; shift ;		  # "mysql" or "postresql"	
 	local DB_PASSWORD=$1 ; shift ;            # mysql root database password, necessary to create database if DB_TYPE=mysql
 
 	local CHILI_IS_PUBLIC=$1 ; shift ;
