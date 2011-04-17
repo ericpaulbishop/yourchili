@@ -126,7 +126,7 @@ EOF
 
 	#SCM stuff
 	if [ "$SCM" = "git" ] ; then
-		create_git "$PROJ_ID""$PROJ_IS_PUBLIC" "$chili_install_path"
+		create_git "$PROJ_ID" "$PROJ_IS_PUBLIC" "$chili_install_path"
 	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
 		create_svn "$PROJ_ID" "$chili_id" "$CHILI_ADMIN_PW" 
 	else
