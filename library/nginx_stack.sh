@@ -429,7 +429,8 @@ function nginx_set_rails_as_vhost_root
 
 	local vhost_config="/etc/nginx/sites-available/$VHOST"
 	local rails_public_path="$RAILS_PATH/public"
-	local rails_public_escaped_path=$(echo "$rails_public_path"   | sed 's/\//\\\//g')
+	local rails_public_escaped_path=$(echo "$rails_public_path"   | sed 's/public\/public$/public/g')
+	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\//\\\//g')
 	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\./\\./g')
 	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\-/\\-/g')
 	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\$/\\$/g')
