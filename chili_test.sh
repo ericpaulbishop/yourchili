@@ -17,6 +17,7 @@ USER_EMAIL="librarian@uu.edu.am"
 
 BACKUP_DIR="/backups" #directory where we store backups
 
+git pull >/dev/null 2>&1
 
 nginx_create_site "mysite.com"        "mysite.com www.mysite.com"               0 "" 1
 nginx_ensite "mysite.com"
