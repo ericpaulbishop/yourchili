@@ -15,7 +15,7 @@ function install_chili_project
 	local FORCE_SSL=$1 ; shift ;
 	local SSL_VHOST_SUBDIR=$1 ; shift ;
 	
-	local DB_TYPE=$1 ; shift ;		   # "mysql" or "postresql"	
+	local DB_TYPE=$1 ; shift ;		  # "mysql" or "postresql"	
 	local DB_PASSWORD=$1 ; shift ;            # mysql root database password, necessary to create database if DB_TYPE=mysql
 
 	local CHILI_IS_PUBLIC=$1 ; shift ;
@@ -126,13 +126,7 @@ EOF
 
 	#SCM stuff
 	if [ "$SCM" = "git" ] ; then
-		create_git "$PROJ_ID" "$chili_install_path"
-		if [ "$PROJ_IS_PUBLIC" = "true" ] ; then
-			touch "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-			chmod -R 775 "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-			chown -R git:www-data "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-		fi
-
+		create_git "$PROJ_ID" "$PROJ_IS_PUBLIC" "$chili_install_path"
 	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
 		create_svn "$PROJ_ID" "$chili_id" "$CHILI_ADMIN_PW" 
 	else
@@ -234,12 +228,13 @@ EOF
 		cd redmine_git_hosting
 		rm -rf .git
 		escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
-		sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                              "init.rb"
-		sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/id_rsa',/"   "init.rb"
-		sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                "init.rb"
+		sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
+		sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/gitolite_admin_id_rsa',/"   "init.rb"
+		sed -i -e  "s/'gitUserIdentityFile.*\$/'gitUserIdentityFile'   => '$escaped_chili_install_path\/.ssh\/git_user_id_rsa',/"         "init.rb"
+		sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                               "init.rb"
 		cp -r /root/.ssh "$chili_install_path"
 		chown -R www-data:www-data "$chili_install_path"
-		chmod 600 "$chili_install_path/.ssh/id_rsa"
+		chmod 600 "$chili_install_path/.ssh/"*rsa*
 		cd "$chili_install_path"
 		rake db:migrate_plugins RAILS_ENV=production
 	fi

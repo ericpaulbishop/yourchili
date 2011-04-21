@@ -20,13 +20,17 @@ function gitolite_install
 		
 		#make sure root has a pubkey
 		if [ ! -e /root/.ssh/id_rsa ] ; then
-			rm -rf /root/.ssh/id_rsa*
-			printf "/root/.ssh/id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P "" 
+			rm -rf /root/.ssh/gitolite_admin_id_rsa*
+			rm -rf /root/.ssh/git_user_id_rsa*
+			printf "/root/.ssh/gitolite_admin_id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P "" 
+			printf "/root/.ssh/git_user_id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P ""
+			
+			#give root gitolite admin priviledges
+			ln -s /root/.ssh/gitolite_admin_id_rsa /root/.ssh/id_rsa 
+			ln -s /root/.ssh/gitolite_admin_id_rsa.pub /root/.ssh/id_rsa.pub
 		fi
 		
 		#create git user
-		mkdir -p /srv/git
-		chmod -R 755 /srv/git/repositories
 		adduser \
 			--system \
 			--shell /bin/sh \
@@ -35,11 +39,14 @@ function gitolite_install
 			--disabled-password \
 			--home /srv/git \
 			git
-		chown -R git:www-data /srv/git
+		if [ ! -d /srv/git ] ; then
+			mkdir -p /srv/git
+			chown git:www-data /srv/git
+		fi
 
 		#install gitolite
 		local curdir=$(pwd)
-		cp /root/.ssh/id_rsa.pub /tmp/root.pub
+		cp /root/.ssh/gitolite_admin_id_rsa.pub /tmp/gitolite_admin_id_rsa.pub
 		cd /tmp
 		git clone git://github.com/sitaramc/gitolite.git
 		cd gitolite
@@ -47,7 +54,37 @@ function gitolite_install
 		mkdir -p /usr/local/share/gitolite/conf /usr/local/share/gitolite/hooks /srv/git/repositories
 		src/gl-system-install /usr/local/bin /usr/local/share/gitolite/conf /usr/local/share/gitolite/hooks
 		chown -R git:www-data /srv/git
-		su git -c "gl-setup -q /tmp/root.pub"
+		su git -c "gl-setup -q /tmp/gitolite_admin_id_rsa.pub"
+
+		#remove testing repo
+		cd /tmp
+		cat << 'EOF' > "/tmp/git_env_ssh"
+#!/bin/bash
+exec ssh -o stricthostkeychecking=no -i /root/.ssh/gitolite_admin_id_rsa "$@"
+EOF
+		chmod 700 "/tmp/git_env_ssh"
+		rm -rf gitolite-admin
+		env GIT_SSH="/tmp/git_env_ssh" git clone git@localhost:gitolite-admin.git
+		cd gitolite-admin
+		local testing_line=$(cat conf/gitolite.conf | grep -n "repo.*testing" | sed 's/:.*$//g')
+		if [ -n "$testing_line" ] ; then
+			head -n $(( $testing_line - 1 )) conf/gitolite.conf > conf/gitolite.tmp
+			mv conf/gitolite.tmp conf/gitolite.conf
+			git commit -a -m "add project $PROJ_ID"
+			env GIT_SSH="/tmp/git_env_ssh" git push
+		fi
+		rm -rf /srv/git/repositories/testing.git
+		cd /tmp
+		rm -rf /tmp/git_env_ssh
+		rm -rf gitolite-admin
+
+
+
+		#authorize special git_user_id_rsa ssh key to be able to login as git user (useful for using ssh to run commands necessray for smart http)
+		cat /srv/git/.ssh/authorized_keys /root/.ssh/git_user_id_rsa.pub >/srv/git/.ssh/new_auth
+		mv /srv/git/.ssh/new_auth /srv/git/.ssh/authorized_keys
+		chown git:www-data /srv/git/.ssh/authorized_keys
+		chmod 600 /srv/git/.ssh/authorized_keys
 
 
 		#install git daemon
@@ -85,13 +122,16 @@ EOF
 		update-rc.d git-daemon defaults
 		/etc/init.d/git-daemon start
 
+		cd "$curdir"
+
 	fi
 }
 
 function create_git
 {
 	local PROJ_ID=$1 ; shift ;
-	
+	local PROJ_IS_PUBLIC=$1 ; shift ;
+
 	#optional -- only if we need to set up a post-recieve chiliproject hook
 	local CHILI_INSTALL_PATH=$1 ; shift ;
 
@@ -105,11 +145,26 @@ function create_git
 
 
 	#create git repository
-	mkdir -p "/srv/git/repositories/$PROJ_ID.git"
-	cd "/srv/git/repositories/$PROJ_ID.git"
-	git init --bare
-	chmod -R 775 /srv/git/repositories/
-	chown -R git:www-data /srv/git/repositories/
+	cd /tmp
+	cat << 'EOF' > "/tmp/git_env_ssh"
+#!/bin/bash
+exec ssh -o stricthostkeychecking=no -i /root/.ssh/gitolite_admin_id_rsa "$@"
+EOF
+	chmod 700 "/tmp/git_env_ssh"
+	rm -rf gitolite-admin
+	env GIT_SSH="/tmp/git_env_ssh" git clone git@localhost:gitolite-admin.git
+	cd gitolite-admin
+	echo ""                                          >>conf/gitolite.conf
+	echo "repo    $PROJ_ID"                          >>conf/gitolite.conf
+	echo "        RW+     =   gitolite_admin_id_rsa" >>conf/gitolite.conf
+	if [ -n "$PROJ_IS_PUBLIC" ] ; then
+		echo "        R     =   daemon"          >>conf/gitolite.conf
+	fi
+	git commit -a -m "add project $PROJ_ID"
+	env GIT_SSH="/tmp/git_env_ssh" git push
+	cd /tmp
+	rm -rf gitolite-admin
+	rm -rf "/tmp/git_env_ssh"
 
 	
 	if [ -n "$CHILI_INSTALL_PATH" ] ; then
