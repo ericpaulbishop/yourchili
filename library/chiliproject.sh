@@ -282,7 +282,7 @@ EOF
 			rm -rf "$ssl_root/$SSL_VHOST_SUBDIR"
 
 			#create symlink
-			ln -s "$chili_install_path" "$ssl_root/$SSL_VHOST_SUBDIR"
+			ln -s "$chili_install_path/public" "$ssl_root/$SSL_VHOST_SUBDIR"
 			nginx_add_passenger_uri_for_vhost "$ssl_config" "/$SSL_VHOST_SUBDIR"
 		fi
 	fi
@@ -293,14 +293,14 @@ EOF
 		if [ "$CHILI_FORCE_SSL" != "1" ] ; then
 			if [ "$CHILI_VHOST_SUBDIR" = "" ] || [ "$CHILI_VHOST_SUBDIR" = "." ] ; then
 				#set to root
-				nginx_set_rails_as_vhost_root "$CHILI_VHOST" "$chili_install_path"
+				nginx_set_rails_as_vhost_root "$CHILI_VHOST" "$chili_install_path/public"
 			else
 				#make intermediate subdirectories
 				mkdir -p "$vhost_root/$CHILI_VHOST_SUBDIR"
 				rm -rf "$vhost_root/$CHILI_VHOST_SUBDIR"
 
 				#create symlink
-				ln -s "$chili_install_path" "$vhost_root/$CHILI_VHOST_SUBDIR"
+				ln -s "$chili_install_path/public" "$vhost_root/$CHILI_VHOST_SUBDIR"
 				nginx_add_passenger_uri_for_vhost "$vhost_config" "/$CHILI_VHOST_SUBDIR"
 			fi
 		else
