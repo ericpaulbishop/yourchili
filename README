@@ -1,4 +1,4 @@
-Redcloud is a bash script library for deploying Redmine in a Cloud / VPS hosting environment with Nginx and Passenger.  It has been tested with Ubuntu 9.10 and 10.04.
+YourChili (formerly Redcloud) is a bash script library for deploying ChiliProject (www.chiliproject.org) in a Cloud / VPS hosting environment with Nginx and Passenger.  It has been tested with Ubuntu 10.10.
 
 One of the primary problems of deploying Redmine is integrating repository hosting with Redmine.  There are many ways of hosting a SVN or Git repository so that they work with Redmine, and this variability can make deployment less than straightforward.  Redcloud provides a very specific structure for repository hosting and Redmine integration, so that it is easy to deploy multiple or single repository Redmine configurations.  Additionally, multiple Redmine installations can be configured for different virtual hosts.  Both Git and SVN are supported, but other version control systems are not.
 

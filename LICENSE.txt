@@ -1,4 +1,4 @@
-Redcloud is copyright (c) 2010 by Eric Bishop <ericpaulbishop@gmail.com>
+YourChilii (formerly Redcloud) is copyright (c) 2010-2011 by Eric Bishop <ericpaulbishop@gmail.com>
 
 This file is free software: you may copy, redistribute and/or modify it
 under the terms of the GNU General Public License as published by the
