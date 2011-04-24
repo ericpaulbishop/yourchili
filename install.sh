@@ -1,4 +1,4 @@
-INSTALL_LOCATION="/usr/local/lib/redcloud"
+INSTALL_LOCATION="/usr/local/lib/yourchili"
 
 if [ -n "$1" ] ; then
 	INSTALL_LOCATION="$1"
@@ -14,7 +14,7 @@ if [ -d ./library ] ; then
 	mkdir -p "$INSTALL_LOCATION"
 	cp -r ./library/* "$INSTALL_LOCATION"
 	echo '#!/bin/bash' > "$INSTALL_LOCATION/tmp.tmp.sh"
-	echo "REDCLOUD_INSTALL_DIR=\"$INSTALL_LOCATION\"" >> "$INSTALL_LOCATION/tmp.tmp.sh"
-	cat "$INSTALL_LOCATION/redcloud.sh" | grep -v -P "^[\t ]*#" >> "$INSTALL_LOCATION/tmp.tmp.sh"
-	mv "$INSTALL_LOCATION/tmp.tmp.sh" "$INSTALL_LOCATION/redcloud.sh"
+	echo "YOURCHILI_INSTALL_DIR=\"$INSTALL_LOCATION\"" >> "$INSTALL_LOCATION/tmp.tmp.sh"
+	cat "$INSTALL_LOCATION/yourchili.sh" | grep -v -P "^[\t ]*#" >> "$INSTALL_LOCATION/tmp.tmp.sh"
+	mv "$INSTALL_LOCATION/tmp.tmp.sh" "$INSTALL_LOCATION/yourchili.sh"
 fi

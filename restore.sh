@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ./install.sh
-source /usr/local/lib/redcloud/redcloud.sh
+source /usr/local/lib/yourchili/yourchili.sh
 
 
 HOSTNAME="mysite.com"

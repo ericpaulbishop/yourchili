@@ -350,8 +350,8 @@ EOF
 	
 
 	mkdir -p "$NGINX_PREFIX/$server_id/logs"
-	cp -r "$REDCLOUD_INSTALL_DIR/default_html" "$NGINX_PREFIX/$server_id/public_html"
-	cat "$REDCLOUD_INSTALL_DIR/default_html/index.html" | sed "s/SERVER_ID/$server_id/g" > "$NGINX_PREFIX/$server_id/public_html/index.html"
+	cp -r "$YOURCHILI_INSTALL_DIR/default_html" "$NGINX_PREFIX/$server_id/public_html"
+	cat "$YOURCHILI_INSTALL_DIR/default_html/index.html" | sed "s/SERVER_ID/$server_id/g" > "$NGINX_PREFIX/$server_id/public_html/index.html"
 	chown -R www-data:www-data "$NGINX_PREFIX/$server_id"
 
 }
