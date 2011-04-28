@@ -383,12 +383,7 @@ function nginx_add_passenger_uri_for_vhost
 	local VHOST_CONFIG_FILE=$1
 	local URI=$2
 
-	escaped_uri=$(echo "$URI" | sed 's/\//\\\//g')
-	escaped_search_uri=$(echo "$escaped_uri" | sed 's/\./\\./g')
-	escaped_search_uri=$(echo "$escaped_search_uri" | sed 's/\-/\\-/g')
-	escaped_search_uri=$(echo "$escaped_search_uri" | sed 's/\$/\\$/g')
-	escaped_search_uri=$(echo "$escaped_search_uri" | sed 's/\^/\\^/g')
-	#I don't think any other special characters are going to be showing up in the uri...
+	escaped_uri=$(escape_path "$URI" )
 	
 
 	NL=$'\\\n'
@@ -410,12 +405,8 @@ function nginx_add_include_for_vhost
 	local VHOST_CONFIG_FILE=$1
 	local INCLUDE_FILE=$2
 
-	escaped_search_include=$(echo "$INCLUDE_FILE" | sed 's/\//\\\//g')
-	escaped_search_include=$(echo "$escaped_search_include" | sed 's/\./\\./g')
-	escaped_search_include=$(echo "$escaped_search_include" | sed 's/\-/\\-/g')
-	escaped_search_include=$(echo "$escaped_search_include" | sed 's/\$/\\$/g')
-	escaped_search_include=$(echo "$escaped_search_include" | sed 's/\^/\\^/g')
-	
+	escaped_search_include=$(escape_path "$INCLUDE_FILE" )
+
 	
 	cat "$VHOST_CONFIG_FILE" | grep -v -P "^[\t ]*include[\t ]+$escaped_search_include;" | grep -v "^}[\t ]*$"  > "$VHOST_CONFIG_FILE.tmp" 
 	printf "\tinclude $INCLUDE_FILE;\n" >>"$VHOST_CONFIG_FILE.tmp"
@@ -430,13 +421,9 @@ function nginx_set_rails_as_vhost_root
 
 	local vhost_config="/etc/nginx/sites-available/$VHOST"
 	local rails_public_path="$RAILS_PATH/public"
-	local rails_public_escaped_path=$(echo "$rails_public_path"   | sed 's/public\/public$/public/g')
-	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\//\\\//g')
-	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\./\\./g')
-	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\-/\\-/g')
-	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\$/\\$/g')
-	rails_public_escaped_path=$(echo "$rails_public_escaped_path" | sed 's/\^/\\^/g')
+	rails_public_path=$(echo "$rails_public_path"   | sed 's/public\/public$/public/g')
 
+	local rails_public_escaped_path=$(escape_path "$rails_public_path" )
 	
 
 	#note: invoking perl like this is like sed, but better, cuz' it handles tabs properly
