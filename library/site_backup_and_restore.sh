@@ -11,6 +11,7 @@ function backup_sites
 		return 1;
 	fi
 	BACKUP_DIR="$1";
+	LINK_DIRS="$2"
 	
 	local curdir=$(pwd)
 
@@ -37,7 +38,16 @@ function backup_sites
 				site_name=$(echo "$site_dir" | sed 's/^.*\///g')
 				cd "$site_dir"/..
 				echo $(pwd)
-				tar cjfp "$BACKUP_DIR/sites/$site_name.tar.bz2" "$site_name"
+				
+				cur_dir=$(pwd)
+				exclude_str=""
+				for dir in $LINK_DIRS ; do
+					esc_cur=$(escape_path "$cur_dir")
+					ex=$(echo "$dir" | sed "s/$esc_cur\///g")
+					exclude_str="$exclude_str --exclude=\"$ex\" "
+				done
+				
+				tar cjp $exclude_str -f "$BACKUP_DIR/sites/$site_name.tar.bz2" "$site_name"
 			fi
 		done
 	fi
@@ -58,8 +68,31 @@ function backup_sites
 				cd "$site_dir"/..
 				echo $(pwd)
 				
-				tar cjfp "$BACKUP_DIR/sites/$site_name.tar.bz2" "$site_name"
+				cur_dir=$(pwd)
+				exclude_str=""
+				for dir in $LINK_DIRS ; do
+					esc_cur=$(escape_path "$cur_dir")
+					ex=$(echo "$dir" | sed "s/$esc_cur\///g")
+					exclude_str="$exclude_str --exclude=\"$ex\" "
+				done
+				
+				tar cjp $exclude_str -f "$BACKUP_DIR/sites/$site_name.tar.bz2" "$site_name"
 			fi
+		done
+	fi
+	
+	if [ -n "$LINK_DIRS" ] ; then
+		cd "$BACKUP_DIR"
+		mkdir linked_dirs
+		cd linked_dirs
+		for dir in $LINK_DIRS ; do
+			name=$(echo "$dir" | md5sum | awk '{ print $1 }')
+			rmdir $name
+			mkdir "$name"
+			cd "$name"
+			ln -s "$dir"
+			echo "$dir" > "path.txt"
+			cd ..
 		done
 	fi
 
