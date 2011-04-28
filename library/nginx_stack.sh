@@ -358,6 +358,7 @@ EOF
 function nginx_ensite
 {
 	local server_id="$1"
+	rm -rf "$NGINX_CONF_PATH/sites-enabled/$server_id" 
 	ln -s "$NGINX_CONF_PATH/sites-available/$server_id" "$NGINX_CONF_PATH/sites-enabled/$server_id" 
 	/etc/init.d/nginx restart
 }
