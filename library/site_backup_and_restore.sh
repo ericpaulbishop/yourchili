@@ -85,14 +85,14 @@ function backup_sites
 	
 	if [ -n "$LINK_DIRS" ] ; then
 		cd "$BACKUP_DIR"
-		mkdir linked_dirs
-		cd linked_dirs
+		mkdir linked
+		cd linked
 		for dir in $LINK_DIRS ; do
 			name=$(echo "$dir" | md5sum | awk '{ print $1 }')
 			rm -rf  "$name"
 			mkdir "$name"
 			cd "$name"
-			ln -s "$dir"
+			ln -s "$dir" link
 			echo "$dir" > "path.txt"
 			cd ..
 		done
@@ -163,6 +163,19 @@ function restore_sites
 					chown -R www-data:www-data "$site_dir"
 				fi
 			fi
+		done
+	fi
+
+	if [ -e "$BACKUP_DIR/linked" ] ; then
+		cd "$BACKUP_DIR/linked"
+		dirlist=$(ls)
+		for dir in $dirlist ; do
+			cd "$dir"
+			path=$(cat path.txt)
+			mkdir -p $path
+			rm -rf $path
+			mv link "$path"
+			ln -s "$path" link
 		done
 	fi
 	
