@@ -222,7 +222,6 @@ function restore_projects
 		if [ -d /srv/projects/git/grack ] ; then
 			chown -R www-data:www-data /srv/projects/git/grack
 		fi
-		
 	fi
  
 	if [ -d "/srv/projects/svn" ] ; then

@@ -27,5 +27,6 @@ source "$YOURCHILI_INSTALL_DIR/site_backup_and_restore.sh"
 source "$YOURCHILI_INSTALL_DIR/mail.sh"
 source "$YOURCHILI_INSTALL_DIR/backup_cronjob.sh"
 source "$YOURCHILI_INSTALL_DIR/wordpress.sh"
+source "$YOURCHILI_INSTALL_DIR/escape_path.sh"
 
 
