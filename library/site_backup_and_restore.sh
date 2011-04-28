@@ -41,10 +41,11 @@ function backup_sites
 				
 				cur_dir=$(pwd)
 				exclude_str=""
+				site_dir=$(echo "$site_dir" | sed 's/\/$//g')
 				for dir in $LINK_DIRS ; do
-					esc_cur=$(escape_path "$cur_dir")
-					ex=$(echo "$dir" | sed "s/$esc_cur\///g")
-					exclude_str="$exclude_str --exclude=\"$ex\" "
+					esc_site=$(escape_path "$site_dir")
+					ex=$(echo "$dir" | sed "s/$esc_site\///g")
+					exclude_str="$exclude_str --exclude=$ex "
 				done
 				
 				tar cjp $exclude_str -f "$BACKUP_DIR/sites/$site_name.tar.bz2" "$site_name"
@@ -87,7 +88,7 @@ function backup_sites
 		cd linked_dirs
 		for dir in $LINK_DIRS ; do
 			name=$(echo "$dir" | md5sum | awk '{ print $1 }')
-			rmdir $name
+			rm -rf  "$name"
 			mkdir "$name"
 			cd "$name"
 			ln -s "$dir"
