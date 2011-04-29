@@ -23,7 +23,7 @@ nginx_create_site "mysite.com"        "mysite.com www.mysite.com"               
 nginx_ensite "mysite.com"
 nginx_delete_site default
 
-install_chili_project   "mysite.com" ""      1 0 ""     postgresql ""      1 "$USER" "$USER_PW" "$USER_FIRST_NAME" "$USER_LAST_NAME" "$USER_EMAIL"     "git" "my-git-proj1" 1 "My Git One"
+install_chili_project   "mysite.com" ""      1 0 ""     postgresql ""      1 "$USER" "$USER_PW" "$USER_FIRST_NAME" "$USER_LAST_NAME" "$USER_EMAIL"     "my-git-proj1" 1 "My Git One"
 
 
 

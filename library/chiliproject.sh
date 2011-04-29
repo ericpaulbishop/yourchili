@@ -26,8 +26,7 @@ function install_chili_project
 	local CHILI_ADMIN_EMAIL=$1 ; shift ;      #email of chili admin user
 
 
-	local SCM=$1 ; shift ;                    #SCM to use, currently only "git" and "svn" are supported
-	local PROJ_ID=$1 ; shift ;                #id for project being created, this will appear in SCM URLs
+	local PROJ_ID=$1 ; shift ;                #id for project being created, this will appear in git URLs
 	local PROJ_IS_PUBLIC=$1 ; shift ;         #is this project publicly visible?  Can anyone grab the code?
 	local PROJ_NAME=$1 ; shift ;              #project name, as it will appear in chili
 
@@ -124,15 +123,7 @@ EOF
 	chmod -R 755 files log tmp public/plugin_assets
 
 
-	#SCM stuff
-	if [ "$SCM" = "git" ] ; then
-		create_git "$PROJ_ID" "$PROJ_IS_PUBLIC" "$chili_install_path"
-	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
-		create_svn "$PROJ_ID" "$chili_id" "$CHILI_ADMIN_PW" 
-	else
-		echo "ERROR: SCM \"$SCM\" not implemented"
-		return 1
-	fi
+	create_git "$PROJ_ID" "$PROJ_IS_PUBLIC" "$chili_install_path"
 
 
 
@@ -150,21 +141,12 @@ project = Project.create(
 					)
 EOF
 
-	if [ "$SCM" = "git" ] ; then
-		cat << EOF >>create.rb
+	cat << EOF >>create.rb
 repo = Repository::Git.create(
 					:project_id=>project.id,
 					:url=>"/srv/git/repositories/$PROJ_ID.git"
 					)
 EOF
-	elif [ "$SCM" = "svn" ] || [ "$SCM" = "subversion" ] ; then
-			cat << EOF >>create.rb
-repo = Repository::Subversion.create(
-					:project_id=>project.id,
-					:url=>"file:///srv/projects/svn/$PROJ_ID"
-					)
-EOF
-	fi
 
 	cat << EOF >>create.rb
 
@@ -222,22 +204,20 @@ EOF
 	
 	
 	#git hosting plugin
-	if [ "$SCM" = "git" ] ; then
-		cd vendor/plugins
-		git clone https://github.com/ericpaulbishop/redmine_git_hosting.git
-		cd redmine_git_hosting
-		rm -rf .git
-		escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
-		sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
-		sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/gitolite_admin_id_rsa',/"   "init.rb"
-		sed -i -e  "s/'gitUserIdentityFile.*\$/'gitUserIdentityFile'   => '$escaped_chili_install_path\/.ssh\/git_user_id_rsa',/"         "init.rb"
-		sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                               "init.rb"
-		cp -r /root/.ssh "$chili_install_path"
-		chown -R www-data:www-data "$chili_install_path"
-		chmod 600 "$chili_install_path/.ssh/"*rsa*
-		cd "$chili_install_path"
-		rake db:migrate_plugins RAILS_ENV=production
-	fi
+	cd vendor/plugins
+	git clone https://github.com/ericpaulbishop/redmine_git_hosting.git
+	cd redmine_git_hosting
+	rm -rf .git
+	escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
+	sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
+	sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/gitolite_admin_id_rsa',/"   "init.rb"
+	sed -i -e  "s/'gitUserIdentityFile.*\$/'gitUserIdentityFile'   => '$escaped_chili_install_path\/.ssh\/git_user_id_rsa',/"         "init.rb"
+	sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                               "init.rb"
+	cp -r /root/.ssh "$chili_install_path"
+	chown -R www-data:www-data "$chili_install_path"
+	chmod 600 "$chili_install_path/.ssh/"*rsa*
+	cd "$chili_install_path"
+	rake db:migrate_plugins RAILS_ENV=production
 
 
 	#single project plugin
@@ -317,124 +297,5 @@ EOF
 	cd "$curdir"
 
 }
-
-
-
-
-
-function add_chili_project
-{
-	#arguments
-	local CHILI_ID=$1                  #id for redmine installation, will be installed to /srv/projects/redmine/$CHILI_ID
-	local PROJ_ID=$2                     #id for project being created, this will appear in SCM URLs
-	local IS_PUBLIC=$3                   #is this project publicly visible?  Can anyone grab the code?
-	local SCM=$4                         #SCM to use, currently only "git" and "svn" are supported
-	local PROJ_NAME=$5                   #project name, as it will appear in redmine
-	local CHILI_ADMIN_USER=$6          #redmine admin user name, must already exist
-	local CHILI_ADMIN_PW=$7            #doubles as redmine admin user pw & redmine database pw
-	local FORCE_SSL_AUTH=$8              #return unauthorized if someone tries to perform password-protected operation over http and not https, only works when SCM=git
-	
-	
-	local curdir=$(pwd)
-
-
-	#cd to chili directory, crap out if it doesn't exist
-	if [ ! -d "/srv/projects/chili/$CHILI_ID" ] ; then
-		return 1 
-	fi
-	cd "/srv/projects/chili/$CHILI_ID"
-
-
-	# save whether we have a public project here 
-	# yes, this should be on a per-project basis, but
-	# this only matters for display of urls in gitolite plugin, so
-	# it's not that big a deal and can easily be changed later
-	is_public="false"
-	if [ "$IS_PUBLIC" == 1 ] || [ "$IS_PUBLIC" == "true" ] ; then
-		is_public="true"
-		echo "$is_public" > "is_public"
-	fi
-
-
-	# for git, when hook is called both git and www-data users 
-	# (which are in the same www-data group) need write access to log directory
-	chmod -R 775 log  
-
-
-
-	#SCM stuff
-	if [ "$SCM" = "git" ] ; then
-		create_git "$PROJ_ID" "$CHILI_ID" "$CHILI_ADMIN_PW" "$FORCE_SSL_AUTH"
-		if [ "$is_public" = "true" ] ; then
-			touch "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-			chmod -R 775 "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-			chown -R git:www-data "/srv/git/repositories/$PROJ_ID.git/git-daemon-export-ok"
-		fi
-
-	elif [ "$SCM" = "svn" ] || [ "SCM" = "subversion" ] ; then
-		create_svn "$PROJ_ID" "$CHILI_ID" "$CHILI_ADMIN_PW" 
-	else
-		echo "not implemented yet"
-		return 1
-	fi
-
-	#add redmine project data with add.rb script
-	cat << EOF >add.rb
-# Adapted From: http://github.com/edavis10/redmine_data_generator/blob/37b8acb63a4302281641090949fb0cb87e8b1039/app/models/data_generator.rb#L36
-
-require 'tmpdir'
-
-project = Project.create(
-					:name => "$PROJ_NAME",
-					:description => "",
-					:identifier => "$PROJ_ID",
-					:is_public =>$is_public
-					)
-EOF
-
-	if [ "$SCM" = "git" ] ; then
-		cat << EOF >>add.rb
-repo = Repository::Git.create(
-					:project_id=>project.id,
-					:url=>"/srv/git/repositories/$PROJ_ID.git"
-					)
-EOF
-	elif [ "$SCM" = "svn" ] || [ "$SCM" = "subversion" ] ; then
-			cat << EOF >>add.rb
-repo = Repository::Subversion.create(
-					:project_id=>project.id,
-					:url=>"file:///srv/projects/svn/$PROJ_ID"
-					)
-EOF
-	fi
-
-	cat << EOF >>add.rb
-
-project.enabled_module_names=(["repository", "issue_tracking"])
-project.trackers = Tracker.all
-project.save
-
-@user = User.find(:first, :conditions=>"login = \"$CHILI_ADMIN_USER\"")
-
-
-@membership = Member.new(
-			:principal=>@user,
-			:project_id=>project.id,
-			:role_ids=>[3]
-			)
-@membership.save
-
-EOF
-	ruby script/console production < add.rb
-	rm -rf add.rb
-
-
-	/etc/init.d/nginx restart
-
-	cd "$curdir"
-
-}
-
-
 
 
