@@ -202,6 +202,14 @@ function better_stuff
 function upgrade_system
 {
 	cat /etc/apt/sources.list | sed 's/^#*deb/deb/g' | grep -v "cdrom" >/tmp/new_src_list.tmp
+	is_ubuntu=$(cat /etc/apt/sources.list | grep "ubuntu")
+	has_security=$(cat /etc/apt/sources.list | grep "\-security")
+	if [ -n "$is_ubuntu" ] && [ -z "$has_security" ] ; then
+		deb_src_root=$(cat sources.list | grep ubuntu.*main | grep "deb-src" | head -n 1 | awk ' { print $1" "$2" "$3"-security" ; }')
+		deb_root=$(echo "$deb_src_root" | sed 's/^deb\-src/deb/g')
+		echo "$deb_root main restricted universe" >>/tmp/new_src_list.tmp
+		echo "$deb_src_root main restricted universe" >>/tmp/new_src_list.tmp
+	fi
 	mv /tmp/new_src_list.tmp /etc/apt/sources.list
 	
 	apt-get install -y aptitude >/dev/null 2>&1
