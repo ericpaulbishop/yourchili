@@ -536,15 +536,15 @@ function nginx_install
 	apt-get source nginx
 	
 	#alter init to match sbin path specified in configure. add to init.d
-	sed -i "s@DAEMON=/usr/sbin/nginx@DAEMON=$NGINX_SBIN_PATH@" nginx-*/debian/init.d
-	cp nginx-*/debian/init.d /etc/init.d/nginx
+	sed -i "s@DAEMON=/usr/sbin/nginx@DAEMON=$NGINX_SBIN_PATH@" nginx-*/debian/*init.d
+	cp nginx-*/debian/*init.d /etc/init.d/nginx
 	chmod 744 /etc/init.d/nginx
 	update-rc.d nginx defaults
 
 	#use provided logrotate file. adjust as you please
-	sed -i "s/daily/$LOGRO_FREQ/" nginx-*/debian/nginx.logrotate
-	sed -i "s/52/$LOGRO_ROTA/" nginx-*/debian/nginx.logrotate
-	cp nginx*/debian/nginx.logrotate /etc/logrotate.d/nginx
+	sed -i "s/daily/$LOGRO_FREQ/" nginx-*/debian/*logrotate
+	sed -i "s/52/$LOGRO_ROTA/" nginx-*/debian/*logrotate
+	cp nginx*/debian/*logrotate /etc/logrotate.d/nginx
 
 
 	pass_comment=""
@@ -607,8 +607,6 @@ EOF
 	
 
 	#delete build directory
-	rm -rf /tmp/nginx
-
 	chown -R www-data:www-data /srv/www
 
 
