@@ -86,7 +86,7 @@ function ruby_install
 	cd ruby*
 	./installer --auto "$RUBY_PREFIX"
 
-	for ex in erb gem irb rackup rails rake rdoc ri ruby ; do
+	for ex in erb gem irb rackup rails rake rdoc ri ruby bundle ; do
 		ln -s "$RUBY_PREFIX/bin/$ex" "/usr/bin/$ex"
 	done
 
