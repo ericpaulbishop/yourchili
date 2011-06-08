@@ -33,11 +33,11 @@ function postgresql_create_user
 	# $1 - the user to create
 	# $2 - their password
 	
-	if [ ! -n "$1" ]; then
+	if [ -z "$1" ] ; then
 		echo "postgresql_create_user() requires the username as its first argument"
 		return 1;
 	fi
-	if [ ! -n "$2" ]; then
+	if [ -z "$2" ] ; then
 		echo "postgresql_create_user() requires the user password to set as the second argument"
 		return 1;
 	fi
@@ -49,11 +49,11 @@ function postgresql_grant_user
 	# $1 - the user to bestow privileges 
 	# $2 - the database
 
-	if [ ! -n "$1" ]; then
+	if [ -z "$1" ] ; then
 		echo "postgresql_grant_user() requires username as the first argument"
 		return 1;
 	fi
-	if [ ! -n "$2" ]; then
+	if [ -z "$2" ] ; then
 		echo "postgresql_grant_user() requires a database as the second argument"
 		return 1;
 	fi
@@ -65,7 +65,7 @@ function postgresql_create_database
 {
 	# $1 - the db name to create
 
-	if [ ! -n "$1" ]; then
+	if [ -z "$1" ] ; then
 		echo "postgresql_create_database() requires the name of the database as the first argument"
 		return 1;
 	fi
@@ -75,7 +75,7 @@ function postgresql_create_database
 
 function backup_postgresql
 {
-	if [ ! -n "$1" ]; then
+	if [ -z "$1" ] ; then
 		echo "backup_postgresql() requires the backup directory as its first argument"
 		return 1;
 	fi
@@ -94,7 +94,7 @@ function backup_postgresql
 
 function restore_postgresql
 {
-	if [ ! -n "$1" ]; then
+	if [ -z "$1" ] ; then
 		echo "restore_postgresql() requires the backup directory as its first argument"
 		return 1;
 	fi
