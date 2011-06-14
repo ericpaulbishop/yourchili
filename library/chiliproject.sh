@@ -99,7 +99,7 @@ function install_chili_project
 	git clone git://github.com/chiliproject/chiliproject.git
 	mv chiliproject "$chili_install_path"
 	cd "$chili_install_path"
-	git checkout "v1.2.0"
+	git checkout "v1.4.0"
 	rm -rf .git
 
 	cat << EOF >config/database.yml
