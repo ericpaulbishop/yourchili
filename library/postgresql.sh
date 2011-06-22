@@ -32,7 +32,7 @@ function postgresql_create_user
 {
 	# $1 - the user to create
 	# $2 - their password
-	
+	# $3 - allow user to create db?
 	if [ -z "$1" ] ; then
 		echo "postgresql_create_user() requires the username as its first argument"
 		return 1;
@@ -42,6 +42,12 @@ function postgresql_create_user
 		return 1;
 	fi
 	echo "CREATE ROLE $1 WITH LOGIN ENCRYPTED PASSWORD '$2';" | sudo -u postgres psql
+	
+	if [ -n "$3" ] ; then
+		if [ "$3" = "1" ] ; then
+			echo "ALTER ROLE $1 WITH CREATEDB;" | sudo -u postgres psql
+		fi
+	fi
 }
 
 function postgresql_grant_user
