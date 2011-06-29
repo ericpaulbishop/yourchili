@@ -103,8 +103,10 @@ function install_chili_project
        	#and visa versa
 	chmod 740 /etc/sudoers 
 	echo '' >>/etc/sudoers
-	echo 'www-data	ALL=(git)	ALL' >>/etc/sudoers
-	echo 'git	ALL=(www-data)	ALL' >>/etc/sudoers
+	echo '# Necessary for Redmine Git Hosting Plugin' >>/etc/sudoers
+	echo 'www-data	ALL=(git)	NOPASSWD:ALL' >>/etc/sudoers
+	echo 'git	ALL=(www-data)	NOPASSWD:ALL' >>/etc/sudoers
+	echo '' >>/etc/sudoers
 	chmod 440 /etc/sudoers
 	
 
