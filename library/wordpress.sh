@@ -68,7 +68,7 @@ function better_wordpress_install
 	# set WP_CACHE variable to true
 	echo "<?php" > wp-config.php.tmp
 	echo "define('WP_CACHE', true);" >>wp-config.php.tmp
-	cat wp-config.php | grep -v "^[\t ]*<\?php[\t ]*$" | grep -v "^[\t ]*\?>[\t ]*$" >> wp-config.php.tmp
+	cat wp-config.php | egrep -v "^[\t ]*<\?php" | egrep -v "^[\t ]*\?>[\t ]*$" >> wp-config.php.tmp
 	echo "?>" >>wp-config.php.tmp
 	mv wp-config.php.tmp wp-config.php
 
