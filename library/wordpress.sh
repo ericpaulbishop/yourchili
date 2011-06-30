@@ -68,6 +68,13 @@ function better_wordpress_install
 	sed -i "s/username_here/$db/" wp-config.php
 	sed -i "s/password_here/$WP_PASS/" wp-config.php
 
+	cat wp-config.php | sed 's/\?>[\t ]*$//g' > wp-config.php.tmp
+	echo "define('WP_CACHE', true);" >>wp-config.php.tmp
+	echo "?>" >>wp-config.php.tmp
+	mv wp-config.php.tmp wp-config.php
+
+
+
 
 	local site_url=$(get_domain_for_site_id $SITE_ID)
 	if [ -z "$site_url" ] ; then
