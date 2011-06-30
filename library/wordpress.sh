@@ -60,13 +60,15 @@ function better_wordpress_install
 		do sed -i "0,/put your unique phrase here/s/put your unique phrase here/$(randomString 50)/" wp-config.php
 	done
 
-	
+	# set database/username/password	
 	sed -i "s/database_name_here/$db/" wp-config.php
 	sed -i "s/username_here/$db/" wp-config.php
 	sed -i "s/password_here/$WP_PASS/" wp-config.php
 
-	cat wp-config.php | sed 's/\?>[\t ]*$//g' > wp-config.php.tmp
+	# set WP_CACHE variable to true
+	echo "<?php" > wp-config.php.tmp
 	echo "define('WP_CACHE', true);" >>wp-config.php.tmp
+	cat wp-config.php | grep -v "<\?php" | grep -v "\?>" >> wp-config.php.tmp
 	echo "?>" >>wp-config.php.tmp
 	mv wp-config.php.tmp wp-config.php
 
