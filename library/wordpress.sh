@@ -22,9 +22,6 @@ function better_wordpress_install
 
 	VPATH=$(cat "/etc/nginx/sites-available/$2" | grep -P "^[\t ]*root"  | awk ' { print $2 } ' | sed 's/;.*$//g')
 
-	echo "WP_PASS = $4";
-	
-
 
 	if [ ! -n "$VPATH" ]; then
 		echo "Could not determine DocumentRoot for $1"
