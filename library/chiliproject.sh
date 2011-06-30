@@ -151,70 +151,72 @@ EOF
 
 require 'tmpdir'
 
+#create project
 project = Project.create(
 					:name => "$PROJ_NAME",
 					:description => "",
 					:identifier => "$PROJ_ID",
 					:is_public =>$PROJ_IS_PUBLIC
 					)
-EOF
 
-	cat << EOF >>create.rb
+#create repo
 repo = Repository::Git.create(
 					:project_id=>project.id,
 					:url=>"/srv/git/repositories/$PROJ_ID.git"
 					)
-EOF
 
-	cat << EOF >>create.rb
 
+#delete original admin user(s)
+admins = User.find_all_by_admin(true)
+admins.each do |a|
+	User.delete(a.id)
+end
+
+#enable issue tracking for project
 project.enabled_module_names=(["repository", "issue_tracking"])
 project.trackers = Tracker.all
 project.save
 
-
-@user = User.new( 
+#create new admin user
+user = User.new( 
 					:language => Setting.default_language,
 					:firstname=>"$CHILI_ADMIN_FIRST",
 					:lastname=>"$CHILI_ADMIN_LAST",
 					:mail=>"$CHILI_ADMIN_EMAIL"
 					)
-@user.admin = true
-@user.login = "$CHILI_ADMIN_USER"
-@user.password = "$CHILI_ADMIN_PW"
-@user.password_confirmation = "$CHILI_ADMIN_PW"
-@user.save
+user.admin = true
+user.login = "$CHILI_ADMIN_USER"
+user.password = "$CHILI_ADMIN_PW"
+user.password_confirmation = "$CHILI_ADMIN_PW"
+user.save
 
-@membership = Member.new(
+#add our user to the project we just created
+membership = Member.new(
 			:principal=>@user,
 			:project_id=>project.id,
 			:role_ids=>[3]
 			)
-@membership.save
+membership.save
 
-
+#allow anonymous users/non_members to add issues to project
 anon = Role.anonymous
 nonm = Role.non_member
 anon.add_permission!( "add_issues" )
 nonm.add_permission!( "add_issues" )
 
 
-closedIssueStatus = IssueStatus.find(:first, :conditions=>"name = \"Closed\"")
+#set status of issue to closed when commit specifies that it is closed
+closedIssueStatus = IssueStatus.find_by_name('Closed')
 if(defined?(closedIssueStatus['id']))
 	Setting.commit_fix_status_id = closedIssueStatus['id']
 end
+
+
 
 EOF
 
 
 
-	#delete original admin user & update info by running create script
-	if [ "$DB_TYPE" = "mysql" ] ; then
-		echo "DELETE FROM users WHERE login=\"admin\" ; " | mysql -u root -p"$DB_PASSWORD" "$db"
-	else
-		echo "DELETE FROM users WHERE login=\"admin\" ; " | sudo -u postgres psql "$db"
-
-	fi
 	ruby script/console production < create.rb
 	rm -rf create.rb
 
