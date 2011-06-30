@@ -37,7 +37,7 @@ function better_wordpress_install
 
 	# download, extract, chown, and get our config file started
 	local curdir=$(pwd)
-	local wp_ver_file="wordpress-3.1.tar.gz"
+	local wp_ver_file="wordpress-3.1.4.tar.gz"
 	cd /tmp
 	wget "http://wordpress.org/$wp_ver_file"
 	tar xfz $wp_ver_file
