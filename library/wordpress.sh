@@ -32,6 +32,19 @@ function better_wordpress_install
 		aptitude -y install wget unzip
 	fi
 
+
+	#set necessary rewrite rule
+	echo 'rewrite ^.*/files/(.*)$ /wp-includes/ms-files.php?file=$1 last;'  >/etc/nginx/wordpress.conf
+	echo 'if (!-e $request_filename)'                                      >>/etc/nginx/wordpress.conf
+	echo '{'                                                               >>/etc/nginx/wordpress.conf
+	echo '    rewrite  ^(.+)$ /index.php?q=$1 last;'                       >>/etc/nginx/wordpress.conf
+	echo '}'                                                               >>/etc/nginx/wordpress.conf
+	chmod 644 /etc/nginx/wordpress.conf
+	nginx_add_include_for_vhost "/etc/nnginx/sites_available/$SITE_ID" "/etc/nginx/wordpress.conf"
+
+
+
+
 	# download, extract, chown, and get our config file started
 	local curdir=$(pwd)
 	local wp_ver_file="wordpress-3.1.4.tar.gz"
