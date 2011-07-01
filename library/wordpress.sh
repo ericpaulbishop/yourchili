@@ -40,8 +40,7 @@ function better_wordpress_install
 	echo '    rewrite  ^(.+)$ /index.php?q=$1 last;'                       >>/etc/nginx/wordpress.conf
 	echo '}'                                                               >>/etc/nginx/wordpress.conf
 	chmod 644 /etc/nginx/wordpress.conf
-	nginx_add_include_for_vhost "/etc/nginx/sites_available/$SITE_ID" "/etc/nginx/wordpress.conf"
-
+	nginx_add_include_for_vhost "/etc/nginx/sites-available/$SITE_ID" "/etc/nginx/wordpress.conf"
 
 
 
