@@ -21,9 +21,7 @@ function gitolite_install
 		#make sure root has a pubkey
 		if [ ! -e /root/.ssh/id_rsa ] ; then
 			rm -rf /root/.ssh/gitolite_admin_id_rsa*
-			rm -rf /root/.ssh/git_user_id_rsa*
 			printf "/root/.ssh/gitolite_admin_id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P "" 
-			printf "/root/.ssh/git_user_id_rsa\n\n\n\n\n" | ssh-keygen -t rsa -P ""
 			
 			#give root gitolite admin priviledges
 			ln -s /root/.ssh/gitolite_admin_id_rsa /root/.ssh/id_rsa 
@@ -77,14 +75,6 @@ EOF
 		cd /tmp
 		rm -rf /tmp/git_env_ssh
 		rm -rf gitolite-admin
-
-
-
-		#authorize special git_user_id_rsa ssh key to be able to login as git user (useful for using ssh to run commands necessray for smart http)
-		cat /srv/git/.ssh/authorized_keys /root/.ssh/git_user_id_rsa.pub >/srv/git/.ssh/new_auth
-		mv /srv/git/.ssh/new_auth /srv/git/.ssh/authorized_keys
-		chown git:www-data /srv/git/.ssh/authorized_keys
-		chmod 600 /srv/git/.ssh/authorized_keys
 
 
 		#install git daemon
