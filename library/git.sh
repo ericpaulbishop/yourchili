@@ -163,7 +163,7 @@ EOF
 		cat << EOF > "$pr_file"
 #!/bin/sh
 
-sudo -u www-data ruby "$CHILI_INSTALL_PATH/script/runner" -e production Repository.fetch_changesets_for_project(\"$PROJ_ID\") >/dev/null 2>&1
+sudo -u www-data ruby "$CHILI_INSTALL_PATH/script/runner" -e production "Repository.fetch_changesets_for_project(\"$PROJ_ID\")" >/dev/null 2>&1
 
 EOF
 
