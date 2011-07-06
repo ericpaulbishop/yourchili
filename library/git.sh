@@ -161,11 +161,13 @@ EOF
 		#post-receive hook
 		pr_file="/srv/git/repositories/$PROJ_ID.git/hooks/post-receive"
 		cat << EOF > "$pr_file"
-cd "$CHILI_INSTALL_PATH"
-ruby script/runner "Repository.fetch_changesets" -e production
+#!/bin/sh
+
+sudo -u www-data ruby "$CHILI_INSTALL_PATH/script/runner" -e production Repository.fetch_changesets_for_project(\"$PROJ_ID\") >/dev/null 2>&1
+
 EOF
 
-		chmod    775 "$pr_file"
+		chmod    700 "$pr_file"
 		chown git:www-data "$pr_file"
 	fi
 
