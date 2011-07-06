@@ -192,7 +192,7 @@ user.save
 
 #add our user to the project we just created
 membership = Member.new(
-			:principal=>@user,
+			:principal=>user,
 			:project_id=>project.id,
 			:role_ids=>[3]
 			)
