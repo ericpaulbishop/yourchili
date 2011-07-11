@@ -40,8 +40,8 @@ function install_chili_project
 	
 	#chiliproject 1.x.y uses 2.3.5, redmine 1.2.x uses 2.3.11, chiliproject 2.x.y uses 2.3.12
 	gem install -v=2.3.5 rails
-	gem install -v=2.3.11 rails
-	gem install -v=2.3.12 rails
+	#gem install -v=2.3.11 rails
+	#gem install -v=2.3.12 rails
 
 
 	local curdir=$(pwd)
@@ -227,7 +227,6 @@ EOF
 	cd vendor/plugins
 	git clone https://github.com/ericpaulbishop/redmine_git_hosting.git
 	cd redmine_git_hosting
-	git checkout sudo
 	rm -rf .git
 	escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
 	sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
