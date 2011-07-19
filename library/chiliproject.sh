@@ -45,8 +45,8 @@ function install_chili_project
 
 
 	#the following is required for chiliproject >= 2.0.0
-	apt-get install libmagick-dev
-	apt-get install libmagickwand-dev
+	aptitude install -y libmagick-dev
+	aptitude install -y libmagickwand-dev
 	if [ "$DB_TYPE" = "mysql" ] ; then
 		/usr/local/ruby/bin/bundle install --without=sqlite postgres
 	else
