@@ -39,9 +39,9 @@ function install_chili_project
 	
 	
 	#chiliproject 1.x.y uses 2.3.5, redmine 1.2.x uses 2.3.11, chiliproject 2.x.y uses 2.3.12
-	gem install -v=2.3.5 rails
+	#gem install -v=2.3.5 rails
 	#gem install -v=2.3.11 rails
-	#gem install -v=2.3.12 rails
+	gem install -v=2.3.12 rails
 
 
 	local curdir=$(pwd)
@@ -117,7 +117,7 @@ function install_chili_project
 	git clone git://github.com/chiliproject/chiliproject.git
 	mv chiliproject "$chili_install_path"
 	cd "$chili_install_path"
-	git checkout "v1.4.0"
+	git checkout "v2.0.0"
 	rm -rf .git
 
 	cat << EOF >config/database.yml
