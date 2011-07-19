@@ -44,6 +44,16 @@ function install_chili_project
 	gem install -v=2.3.12 rails
 
 
+	#the following is required for chiliproject >= 2.0.0
+	apt-get install libmagick-dev
+	apt-get install libmagickwand-dev
+	if [ "$DB_TYPE" = "mysql" ] ; then
+		/usr/local/ruby/bin/bundle install --without=sqlite postgres
+	else
+		/usr/local/ruby/bin/bundle install --without=sqlite mysql
+	fi
+
+
 	local curdir=$(pwd)
 	local chili_install_path=""
 	local chili_id=""
