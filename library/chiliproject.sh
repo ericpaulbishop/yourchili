@@ -44,14 +44,7 @@ function install_chili_project
 	gem install -v=2.3.12 rails
 
 
-	#the following is required for chiliproject >= 2.0.0
-	aptitude install -y libmagick-dev
-	aptitude install -y libmagickwand-dev
-	if [ "$DB_TYPE" = "mysql" ] ; then
-		/usr/local/ruby/bin/bundle install --without=sqlite postgres
-	else
-		/usr/local/ruby/bin/bundle install --without=sqlite mysql
-	fi
+
 
 
 	local curdir=$(pwd)
@@ -130,6 +123,28 @@ function install_chili_project
 	git checkout "v2.0.0"
 	rm -rf .git
 
+	#the following is required for chiliproject >= 2.0.0
+	aptitude install -y libmagick-dev
+	aptitude install -y libmagickwand-dev
+	if [ "$DB_TYPE" = "mysql" ] ; then
+		/usr/local/ruby/bin/bundle install --without=sqlite postgres
+	else
+		/usr/local/ruby/bin/bundle install --without=sqlite mysql
+	fi
+
+
+	##if you want redmine instead of chiliproject
+	##comment above and uncomment below
+	#
+	#cd /tmp
+	#git clone git://github.com/edavis10/redmine.git
+	#mv redmine "$chili_install_path"
+	#cd "$chili_install_path"
+	#git checkout "1.2.1"
+	#rm -rf .git
+
+
+
 	cat << EOF >config/database.yml
 production:
   adapter: $DB_TYPE
@@ -138,6 +153,9 @@ production:
   username: $db
   password: $CHILI_ADMIN_PW
 EOF
+
+
+
 
 	if [ -e config/initializers/session_store.rb ] ; then
 		RAILS_ENV=production rake config/initializers/session_store.rb
