@@ -255,7 +255,6 @@ EOF
 	cd vendor/plugins
 	git clone https://github.com/ericpaulbishop/redmine_git_hosting.git
 	cd redmine_git_hosting
-	git checkout "git_cache"
 	rm -rf .git
 	escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
 	sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
