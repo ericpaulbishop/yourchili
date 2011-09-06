@@ -25,5 +25,9 @@ nginx_delete_site default
 
 install_chili_project   "mysite.com" ""      1 0 ""     postgresql ""      1 "$USER" "$USER_PW" "$USER_FIRST_NAME" "$USER_LAST_NAME" "$USER_EMAIL"     "my-git-proj1" 1 "My Git One"
 
+cd /root
+ln -s /srv/www/my*/chili
+ln -s /srv/www/my*/chili/v*/plug*/*git*
+
 
 
