@@ -9,7 +9,8 @@
 
 function git_install
 {
-	aptitude install -y git
+	aptitude install -y git-core >/dev/null 2>&1
+	aptitude install -y git      >/dev/null 2>&1
 }
 
 function gitolite_install
