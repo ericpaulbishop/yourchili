@@ -126,10 +126,10 @@ function install_chili_project
 	#the following is required for chiliproject >= 2.0.0
 	aptitude install -y libmagick-dev
 	aptitude install -y libmagickwand-dev
-	if [ "$DB_TYPE" = "mysql" ] ; then
-		/usr/local/ruby/bin/bundle install --without=sqlite postgres
+	if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
+		/usr/local/ruby/bin/bundle install --without=sqlite3 postgres mysql2
 	else
-		/usr/local/ruby/bin/bundle install --without=sqlite mysql
+		/usr/local/ruby/bin/bundle install --without=sqlite3 mysql mysql2
 	fi
 
 
