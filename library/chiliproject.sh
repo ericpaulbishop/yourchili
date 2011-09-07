@@ -127,12 +127,15 @@ function install_chili_project
 	aptitude install -y libmagick-dev
 	aptitude install -y libmagickwand-dev
 	if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
-		/usr/local/ruby/bin/bundle install --without=sqlite3 postgres mysql2
+		/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
 	else
-		/usr/local/ruby/bin/bundle install --without=sqlite3 mysql mysql2
+		/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
 	fi
 
 
+	
+	
+	
 	##if you want redmine instead of chiliproject
 	##comment above and uncomment below
 	#
@@ -264,6 +267,11 @@ EOF
 	chown -R www-data:www-data "$chili_install_path"
 	chmod 600 "$chili_install_path/.ssh/"*rsa*
 	cd "$chili_install_path"
+	if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
+		/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
+	else
+		/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
+	fi
 	rake db:migrate_plugins RAILS_ENV=production
 
 
@@ -273,9 +281,16 @@ EOF
 	cd redmine_single_project
 	rm -rf .git
 	cd "$chili_install_path"
+	if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
+		/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
+	else
+		/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
+	fi
+
 
 	#action_mailer_optional_tls plugin
 	script/plugin install git://github.com/collectiveidea/action_mailer_optional_tls.git
+
 
 
 	#themes
