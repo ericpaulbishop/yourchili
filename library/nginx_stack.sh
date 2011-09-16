@@ -88,7 +88,7 @@ function ruby_install
 	wget "$ruby_ee_source_url"
 	tar xvzf *.tar.gz
 	rm -rf *.tar.gz
-	
+
 	
 	cd ruby*
 	if [ -e "source/ext/openssl/ossl_ssl.c" ] ; then
@@ -389,6 +389,20 @@ function nginx_install
 	if  [ "$NGINX_USE_PASSENGER" = 1 ] ; then
 		passenger_root=`$RUBY_PREFIX/bin/passenger-config --root`
 		passenger_path="$passenger_root/ext/nginx"
+
+		
+		#bugfix for passenger 3.0.9, otherwise it won't compile
+		is_309=$(echo "$passenger_path" | grep "3\.0\.9")
+		if [ -n "$is_309" ] ; then
+			if [ -e "$passenger_path/ContentHandler.c" ] ; then
+				sed -i 's/^.*[* \t]main_conf[ \t;].*$//g' "$passenger_path/ContentHandler.c" 
+				echo ""
+				echo "PATCHING BUG IN PASSENGER 3.0.9"
+				echo ""
+			fi
+		fi
+
+
 
 
 		./configure --prefix="$NGINX_PREFIX" --sbin-path="$NGINX_SBIN_PATH" --conf-path="$nginx_conf_file" --pid-path="$NGINX_PID_PATH" --error-log-path="$NGINX_ERROR_LOG_PATH" --http-log-path="$nginx_http_log_file" --user="$NGINX_USER" --group="$NGINX_GROUP" --with-http_ssl_module --with-debug --add-module="$passenger_path"
