@@ -395,9 +395,28 @@ function nginx_install
 		is_309=$(echo "$passenger_path" | grep "3\.0\.9")
 		if [ -n "$is_309" ] ; then
 			if [ -e "$passenger_path/ContentHandler.c" ] ; then
-				sed -i 's/^.*[* \t]main_conf[ \t;].*$//g' "$passenger_path/ContentHandler.c" 
+				sed -i 's/^.*[* \t]main_conf[ \t;].*$//g' "$passenger_path/ContentHandler.c"
+			fi
+			if [ -e "$passenger_path/config" ] ; then
+				cat << 'EOF' >>$passenger_path/config
+
+ngx_feature="Math library"
+ngx_feature_name=
+ngx_feature_run=no
+ngx_feature_incs="#include <math.h>"
+ngx_feature_path=
+ngx_feature_libs="-lm"
+ngx_feature_test="pow(1, 2)"
+. auto/feature
+if [ $ngx_found = yes ]; then
+    CORE_LIBS="$CORE_LIBS -lm"
+fi
+
+EOF
+				fi
+				
 				echo ""
-				echo "PATCHING BUG IN PASSENGER 3.0.9"
+				echo "PATCHING BUGS IN PASSENGER 3.0.9"
 				echo ""
 			fi
 		fi
