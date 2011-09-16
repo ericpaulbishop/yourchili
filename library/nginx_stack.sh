@@ -91,7 +91,7 @@ function ruby_install
 	./installer --auto "$RUBY_PREFIX"
 	if [ -e "souce/ext/openssl/ossl_ssl.c" ] ; then
 		sed -i 's/OSSL_SSL_METHOD_ENTRY.SSLv2[\)_].*$/ /g' "source/ext/openssl/ossl_ssl.c"
-	end
+	fi
 	cd ruby*
 	for ex in erb gem irb rackup rails rake rdoc ri ruby bundle ; do
 		ln -s "$RUBY_PREFIX/bin/$ex" "/usr/bin/$ex"
