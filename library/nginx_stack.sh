@@ -413,12 +413,10 @@ if [ $ngx_found = yes ]; then
 fi
 
 EOF
-				fi
-				
-				echo ""
-				echo "PATCHING BUGS IN PASSENGER 3.0.9"
-				echo ""
 			fi
+			echo ""
+			echo "PATCHING BUGS IN PASSENGER 3.0.9"
+			echo ""
 		fi
 
 
