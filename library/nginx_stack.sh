@@ -88,9 +88,11 @@ function ruby_install
 	wget "$ruby_ee_source_url"
 	tar xvzf *.tar.gz
 	rm -rf *.tar.gz
-	cd ruby*
 	./installer --auto "$RUBY_PREFIX"
-
+	if [ -e "souce/ext/openssl/ossl_ssl.c" ] ; then
+		sed -i 's/OSSL_SSL_METHOD_ENTRY.SSLv2[\)_].*$/ /g' "source/ext/openssl/ossl_ssl.c"
+	end
+	cd ruby*
 	for ex in erb gem irb rackup rails rake rdoc ri ruby bundle ; do
 		ln -s "$RUBY_PREFIX/bin/$ex" "/usr/bin/$ex"
 	done
