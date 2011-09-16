@@ -79,7 +79,12 @@ function ruby_install
 	mkdir /tmp/ruby
 	cd /tmp/ruby
 
-	aptitude install -y build-essential zlib1g-dev libssl-dev libreadline5-dev
+	aptitude install -y build-essential zlib1g-dev libssl-dev
+	aptitude install -y libreadline5-dev >/dev/null 2>&1
+	aptitude install -y libreadline6-dev >/dev/null 2>&1
+	aptitude install -y libreadline-dev  >/dev/null 2>&1
+
+
 	wget "$ruby_ee_source_url"
 	tar xvzf *.tar.gz
 	rm -rf *.tar.gz
@@ -344,6 +349,7 @@ function nginx_install
 
 	#theres a couple dependencies.
 	aptitude install -y libpcre3-dev libcurl4-openssl-dev libssl-dev
+
 
 	#not nginx specific deps
 	aptitude install -y wget build-essential
