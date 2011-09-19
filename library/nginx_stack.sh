@@ -90,7 +90,7 @@ function ruby_install
 		ln -s "$RUBY_PREFIX/bin/$ex" "/usr/bin/$ex"
 	done
 
-	gem install rails --version 3.0.5
+	gem install rails
 	gem install mysql
 	gem install dbi
 	gem install dbd-mysql
