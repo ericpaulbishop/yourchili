@@ -100,8 +100,17 @@ function ruby_install
 		ln -s "$RUBY_PREFIX/bin/$ex" "/usr/bin/$ex"
 	done
 
-	gem install rails --version 3.0.5
-	gem install mysql
+        # Install rails
+        gem install rails --no-ri --no-rdoc
+
+        # Install sqlite gem
+        apt-get -y install sqlite3 libsqlite3-dev
+        gem install sqlite3-ruby --no-ri --no-rdoc
+  
+        # Install mysql gem
+        apt-get -y install libmysql-ruby libmysqlclient-dev
+        gem install mysql2 --no-ri --no-rdoc
+
 	gem install dbi
 	gem install dbd-mysql
 
