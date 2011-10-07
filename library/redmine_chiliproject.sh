@@ -7,7 +7,7 @@
 REDMINE_GIT_REPO="git://github.com/edavis10/redmine.git"
 CHILI_PROJECT_GIT_REPO="git://github.com/chiliproject/chiliproject.git"
 REDMINE_VERSION="1.2.1"
-CHILI_PROJECT_VERSION="v2.2.0"
+CHILI_PROJECT_VERSION="v2.3.0"
 
 
 function install_chili_project
