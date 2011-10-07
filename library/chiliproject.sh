@@ -43,7 +43,11 @@ function install_chili_project
 	#gem install -v=2.3.11 rails
 	gem install -v=2.3.14 rails
 
-
+	
+	#necessary for redmine git hosting plugin
+	gem install inifile
+	gem install net-ssh
+	gem install lockfile
 
 
 
@@ -84,13 +88,15 @@ function install_chili_project
 		mysql_create_database "$DB_PASSWORD" "$db"
 		mysql_create_user     "$DB_PASSWORD" "$db" "$CHILI_ADMIN_PW"
 		mysql_grant_user      "$DB_PASSWORD" "$db" "$db"
-		gem install mysql
+		gem install dbi       --no-ri --no-rdoc
+		gem install dbd-mysql --no-ri --no-rdoc
+		gem install mysql     --no-ri --no-rdoc
 	else
 		postgresql_install         #be sure it's installed
 		postgresql_create_database "$db"
 		postgresql_create_user     "$db" "$CHILI_ADMIN_PW"
 		postgresql_grant_user      "$db" "$db"
-		gem install pg
+		gem install pg --no-ri --no-rdoc
 	fi
 
 

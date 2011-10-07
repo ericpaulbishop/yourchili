@@ -103,21 +103,6 @@ function ruby_install
         # Install rails
         gem install rails --no-ri --no-rdoc
 
-        # Install sqlite gem
-        apt-get -y install sqlite3 libsqlite3-dev
-        gem install sqlite3-ruby --no-ri --no-rdoc
-  
-        # Install mysql gem
-        apt-get -y install libmysql-ruby libmysqlclient-dev
-        gem install mysql2 --no-ri --no-rdoc
-
-	gem install dbi
-	gem install dbd-mysql
-
-	#necessary for redmine git hosting plugin
-	gem install inifile
-	gem install net-ssh
-	gem install lockfile
 
 	cd "$curdir"
 	rm -rf /tmp/ruby
