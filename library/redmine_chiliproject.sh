@@ -12,18 +12,18 @@ CHILI_PROJECT_VERSION="v2.2.0"
 
 function install_chili_project
 {
-	install_chili_project_or_redmine "0" $@
+	install_chili_project_or_redmine "0" "$@"
 }
 function install_redmine
 {
-	install_chili_project_or_redmine "1" $@
+	install_chili_project_or_redmine "1" "$@"
 }
 
 
 function install_chili_project_or_redmine
 {
 	#arguments
-	local IS_REDMINE=$1  ; shift
+	local IS_REDMINE=$1  ; shift ;
 	local CHILI_VHOST=$1 ; shift ;
 	local CHILI_VHOST_SUBDIR=$1 ; shift ;
 	
