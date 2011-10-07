@@ -1,13 +1,29 @@
 #!/bin/bash
 
-#################
-# ChiliProject  #
-#################
+###########################
+# Redmine / ChiliProject  #
+###########################
+
+REDMINE_GIT_REPO="git://github.com/edavis10/redmine.git"
+CHILI_PROJECT_GIT_REPO="git://github.com/chiliproject/chiliproject.git"
+REDMINE_VERSION="1.2.1"
+CHILI_PROJECT_VERSION="v2.2.0"
 
 
 function install_chili_project
 {
+	install_chili_project_or_redmine "0" $@
+}
+function install_redmine
+{
+	install_chili_project_or_redmine "1" $@
+}
+
+
+function install_chili_project_or_redmine
+{
 	#arguments
+	local IS_REDMINE=$1  ; shift
 	local CHILI_VHOST=$1 ; shift ;
 	local CHILI_VHOST_SUBDIR=$1 ; shift ;
 	
@@ -35,20 +51,19 @@ function install_chili_project
 	CHILI_VHOST_SUBDIR=$(echo "$CHILI_VHOST_SUBDIR" | sed 's/^\///g')
 	SSL_VHOST_SUBDIR=$(echo "$SSL_VHOST_SUBDIR" | sed 's/^\///g')
 
-	gem install -v=0.4.2 i18n
-	
-	
-	#chiliproject 1.x.y uses 2.3.5, redmine 1.2.x uses 2.3.11, chiliproject 2.x.y uses 2.3.12
-	#gem install -v=2.3.5 rails
-	#gem install -v=2.3.11 rails
-	gem install -v=2.3.14 rails
+	#redmine doesn't have gemfile like chiliproject, need to install gems manually
+	local app_prefix="chili"
+	if [ "$IS_REDMINE" = "1" ] ; then
+		gem install -v=0.4.2 i18n --no-ri --no-rdoc
+		gem install -v=2.3.11 rails --no-ri --no-rdoc
 
-	
-	#necessary for redmine git hosting plugin
-	gem install inifile
-	gem install net-ssh
-	gem install lockfile
-
+		#necessary for redmine git hosting plugin
+		gem install inifile --no-ri --no-rdoc
+		gem install net-ssh --no-ri --no-rdoc
+		gem install lockfile --no-ri --no-rdoc
+		
+		app_prefix="redmine"
+	fi
 
 
 	local curdir=$(pwd)
@@ -59,23 +74,23 @@ function install_chili_project
 		return
 	elif [ -z "$CHILI_VHOST" ] ; then
 		#install to SSL VHOST
-		chili_id="chili"
+		chili_id=$app_prefix
 		chili_install_path="/srv/www/$NGINX_SSL_ID/$chili_id"
 		
 		chili_num=1
 		while [ -e "$chili_install_path" ] ; do
-			chili_id="chili_$chili_num"
+			chili_id="${app_prefix}_${chili_num}"
 			chili_install_path="/srv/www/$NGINX_SSL_ID/$chili_id"
 			chili_num=$(( $chili_num + 1 ))
 		done
 	else
 		#install to VHOST
-		chili_id="chili"
+		chili_id=$app_prefix
 		chili_install_path="/srv/www/$CHILI_VHOST/$chili_id"
 
 		chili_num=1
 		while [ -e "$chili_install_path" ] ; do
-			chili_id="chili_$chili_num"
+			chili_id="${app_prefix}_${chili_num}"
 			chili_install_path="/srv/www/$CHILI_VHOST/$chili_id"
 			chili_num=$(( $chili_num + 1 ))
 		done
@@ -83,7 +98,7 @@ function install_chili_project
 
 
 	#create chili database
-	local db="chili_"$(randomString 10 | tr "[:upper:]" "[:lower:]")
+	local db="${app_prefix}_"$(randomString 10 | tr "[:upper:]" "[:lower:]")
 	if [ "$DB_TYPE" = "mysql" ] && [ -n "$DB_PASSWORD"] ; then
 		mysql_create_database "$DB_PASSWORD" "$db"
 		mysql_create_user     "$DB_PASSWORD" "$db" "$CHILI_ADMIN_PW"
@@ -120,37 +135,34 @@ function install_chili_project
 	
 
 
-
-	#get chiliproject code
 	cd /tmp
-	git clone git://github.com/chiliproject/chiliproject.git
-	mv chiliproject "$chili_install_path"
-	cd "$chili_install_path"
-	git checkout "v2.2.0"
-	rm -rf .git
-
-	#the following is required for chiliproject >= 2.0.0
-	aptitude install -y libmagick-dev
-	aptitude install -y libmagickwand-dev
-	if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
-		/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
+	if [ "$IS_REDMINE" = "1" ] ; then
+		git clone "$REDMINE_GIT_REPO"
+		mv redmine "$chili_install_path"
+		cd "$chili_install_path"
+		git checkout "$REDMINE_VERSION"
+		rm -rf .git
 	else
-		/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
+		#get chiliproject code
+		cd /tmp
+		git clone "$CHILI_PROJECT_GIT_REPO"
+		mv chiliproject "$chili_install_path"
+		cd "$chili_install_path"
+		git checkout "$CHILI_PROJECT_VERSION"
+		rm -rf .git
+
+		#the following is required for chiliproject >= 2.0.0
+		aptitude install -y libmagick-dev
+		aptitude install -y libmagickwand-dev
+		if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
+			/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
+		else
+			/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
+		fi
 	fi
-
-
 	
 	
 	
-	##if you want redmine instead of chiliproject
-	##comment above and uncomment below
-	#
-	#cd /tmp
-	#git clone git://github.com/edavis10/redmine.git
-	#mv redmine "$chili_install_path"
-	#cd "$chili_install_path"
-	#git checkout "1.2.1"
-	#rm -rf .git
 
 
 
@@ -161,6 +173,17 @@ production:
   host: localhost
   username: $db
   password: $CHILI_ADMIN_PW
+  encoding: utf8
+
+development:
+  adapter: $DB_TYPE
+  database: $db
+  host: localhost
+  username: $db
+  password: $CHILI_ADMIN_PW
+  encoding: utf8
+
+
 EOF
 
 
@@ -262,7 +285,7 @@ EOF
 	
 	#git hosting plugin
 	cd vendor/plugins
-	git clone https://github.com/ericpaulbishop/redmine_git_hosting.git
+	git clone git://github.com/ericpaulbishop/redmine_git_hosting.git
 	cd redmine_git_hosting
 	rm -rf .git
 	escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
@@ -283,7 +306,7 @@ EOF
 
 	#single project plugin
 	cd vendor/plugins
-	git clone https://github.com/ericpaulbishop/redmine_single_project.git
+	git clone git://github.com/ericpaulbishop/redmine_single_project.git
 	cd redmine_single_project
 	rm -rf .git
 	cd "$chili_install_path"
@@ -300,7 +323,7 @@ EOF
 
 
 	#themes
-	git clone https://github.com/ericpaulbishop/redmine_theme_pack.git
+	git clone git://github.com/ericpaulbishop/redmine_theme_pack.git
 	mkdir -p public/themes
 	mv redmine_theme_pack/* public/themes/
 	rm -rf redmine_theme_pack
