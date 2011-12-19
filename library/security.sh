@@ -1,3 +1,4 @@
+#!/bin/bash
 
 #################################
 #	Security                #
@@ -34,18 +35,18 @@ function set_open_ports
 
 function prevent_syn_flood
 {
-	MAX_CONN_PER_IP_PER_MINUTE="400"
-
+	local MAX_CONN_PER_IP_PER_SECOND="200"
 	if [ -n "$1" ] ; then
-		MAX_CONN_PER_IP_PER_MINUTE="$1"
+		MAX_CONN_PER_IP_PER_SECOND="$1"
 	fi
-	BURST=$(( 3 + (MAX_CONN_PER_IP_PER_MINUTE/10) ))
 
-	sed -i 's/^\*filter.*$/*filter\n:ufw-before-logging-input - [0:0]/g' /etc/ufw/after.rules
-	sed -i 's/^COMMIT.*$//g'                                             /etc/ufw/after.rules
-	sed -i 's/^.*hashlimit.*SYNFLOOD.*$/g'                               /etc/ufw/after.rules
-	echo "-I ufw-before-logging-input -i eth0 -p tcp --syn -m hashlimit --hashlimit-above $MAX_CONN_PER_IP_PER_MINUTE/min --hashlimit-burst $BURST --hashlimit-mode srcip --hashlimit-name SYNFLOOD --hashlimit-htable-size 32768 --hashlimit-htable-max 32768 --hashlimit-htable-gcinterval 1000 --hashlimit-htable-expire 100000 -j DROP" >> /etc/ufw/after.rules
-	echo "COMMIT" >> /etc/ufw/after.rules
+
+	sed -i 's/^.*synflooders.*$//g'   /etc/ufw/before.rules
+	sed -i 's/^COMMIT.*$//g'          /etc/ufw/before.rules
+
+	echo "-I ufw-before-input -i eth0 -p tcp --syn -m hashlimit --hashlimit-above $MAX_CONN_PER_IP_PER_SECOND/sec --hashlimit-burst $MAX_CONN_PER_IP_PER_SECOND --hashlimit-mode srcip --hashlimit-name SYNFLOOD --hashlimit-htable-size 32768 --hashlimit-htable-max 32768 --hashlimit-htable-gcinterval 1000 --hashlimit-htable-expire 100000 -m recent --name synflooders --set -j DROP" >> /etc/ufw/before.rules
+	echo "-I ufw-before-input -i eth0 -m recent --name synflooders --rcheck -j DROP" >> /etc/ufw/before.rules
+	echo "COMMIT" >> /etc/ufw/before.rules
 
 	#restart firewall
 	ufw disable
