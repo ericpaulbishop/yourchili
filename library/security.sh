@@ -20,6 +20,7 @@ function set_open_ports
 	#always allow ssh
 	ufw default deny
 	ufw allow ssh
+	ufw logging off
 
 	#set allowed ports
 	while [ -n "$1" ] ; do
@@ -28,7 +29,6 @@ function set_open_ports
 	done
 	
 	#enable firewall
-	ufw logging on 
 	printf "y\ny\ny\n" | ufw enable
 }
 
