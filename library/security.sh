@@ -54,3 +54,31 @@ function prevent_syn_flood
 
 }
 
+
+# requires public keys to activate as parameters
+# function will die with error if no public keys are specified
+function disable_password_ssh_auth
+{
+	if [ -z "$1" ] ; then
+		echo "ERROR: NO PUBLIC KEYS SPECIFIED, CANNOT DISABLE PASSWORD AUTH"
+		return
+	fi
+	
+	sed -i 's/^.*ChallengeResponseAuthentication.*$/ChallengeResponseAuthentication no/g'  /etc/ssh/sshd_config
+	sed -i 's/^.*PasswordAuthentication.*$/PasswordAuthentication no/g'                    /etc/ssh/sshd_config
+	sed -i 's/^.*UsePAM.*$/UsePAM no/g'                                                    /etc/ssh/sshd_config
+	
+	#allow root login
+	sed -i 's/^.*PermitRootLogin.*$/PermitRootLogin yes/g'                                                    /etc/ssh/sshd_config
+	
+	mkdir -p /root/.ssh
+	while [ -n "$1" ] ; do
+		echo "$1" >> /root/.ssh/authorized_keys
+		shift
+	done
+
+	restart ssh
+}
+
+
+
