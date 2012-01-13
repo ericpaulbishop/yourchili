@@ -154,6 +154,7 @@ function install_chili_project_or_redmine
 		#the following is required for chiliproject >= 2.0.0
 		aptitude install -y libmagick-dev
 		aptitude install -y libmagickwand-dev
+		aptitude install -y libxslt-dev
 		if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
 			/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
 		else
