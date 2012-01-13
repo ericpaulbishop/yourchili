@@ -51,7 +51,6 @@ function prevent_syn_flood
 	#restart firewall
 	ufw disable
 	printf "y\ny\ny\n" | ufw enable
-
 }
 
 
