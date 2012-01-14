@@ -288,6 +288,10 @@ EOF
 	cd vendor/plugins
 	git clone git://github.com/ericpaulbishop/redmine_git_hosting.git
 	cd redmine_git_hosting
+
+	#checkout proper redmine_git_hosting version
+	git checkout new_contributions
+
 	rm -rf .git
 	escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
 	sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
@@ -306,16 +310,16 @@ EOF
 
 
 	#single project plugin
-	cd vendor/plugins
-	git clone git://github.com/ericpaulbishop/redmine_single_project.git
-	cd redmine_single_project
-	rm -rf .git
-	cd "$chili_install_path"
-	if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
-		/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
-	else
-		/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
-	fi
+	#cd vendor/plugins
+	#git clone git://github.com/ericpaulbishop/redmine_single_project.git
+	#cd redmine_single_project
+	#rm -rf .git
+	#cd "$chili_install_path"
+	#if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
+	#	/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
+	#else
+	#	/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
+	#fi
 
 
 	#action_mailer_optional_tls plugin
