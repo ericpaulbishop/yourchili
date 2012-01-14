@@ -55,7 +55,7 @@ function install_chili_project_or_redmine
 	local app_prefix="chili"
 	if [ "$IS_REDMINE" = "1" ] ; then
 		gem install -v=0.4.2 i18n --no-ri --no-rdoc
-		gem install -v=2.3.11 rails --no-ri --no-rdoc
+		gem install -v=2.3.14 rails --no-ri --no-rdoc
 
 		#necessary for redmine git hosting plugin
 		gem install inifile --no-ri --no-rdoc
