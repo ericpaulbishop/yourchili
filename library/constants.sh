@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RUBY_PREFIX="/usr/local/ruby"
+export RUBY_PREFIX="/usr/local/bin"
 export NGINX_VER="1.2.3"
 export NGINX_PREFIX="/srv/www"
 export NGINX_SBIN_PATH="/usr/local/sbin/nginx"

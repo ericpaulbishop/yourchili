@@ -74,34 +74,34 @@ function perl_fcgi_install
 function ruby_install
 {
 	local curdir=$(pwd)
-	
-	ruby_ee_source_url=$(echo $(wget -O-  http://www.rubyenterpriseedition.com/download.html 2>/dev/null ) | egrep -o 'href="[^\"]*\.tar\.gz' | sed 's/^href="//g')
+
+
 	mkdir /tmp/ruby
 	cd /tmp/ruby
 
-	aptitude install -y build-essential zlib1g-dev libssl-dev
+	aptitude install -y build-essential zlib1g-dev 2>&1
+	aptitude install -y libssl-dev libreadline-dev libyaml-dev libcurl4-openssl-dev curl git-core python-software-properties 2>&1
 	aptitude install -y libreadline5-dev >/dev/null 2>&1
 	aptitude install -y libreadline6-dev >/dev/null 2>&1
-	aptitude install -y libreadline-dev  >/dev/null 2>&1
 
 
-	wget "$ruby_ee_source_url"
-	tar xvzf *.tar.gz
+	ruby_src_url="ftp://ftp.ruby-lang.org/pub/ruby/1.9/ruby-1.9.3-p194.tar.gz"
+
+
+	wget "$ruby_src_url"
+	tar xzf *.tar.gz
 	rm -rf *.tar.gz
-
 	
 	cd ruby*
-	if [ -e "source/ext/openssl/ossl_ssl.c" ] ; then
-		sed -i 's/OSSL_SSL_METHOD_ENTRY.SSLv2[\)_].*$/ /g' "source/ext/openssl/ossl_ssl.c"
-	fi
+	./configure
+	make
+	make install
 	
-	./installer --auto "$RUBY_PREFIX"
-	for ex in erb gem irb rackup rails rake rdoc ri ruby bundle ; do
-		ln -s "$RUBY_PREFIX/bin/$ex" "/usr/bin/$ex"
-	done
 
         # Install rails
         gem install rails --no-ri --no-rdoc
+        gem install passenger --no-ri --no-rdoc
+	gem install bundler --no-ri --no-rdoc
 
 
 	cd "$curdir"
@@ -385,36 +385,6 @@ function nginx_install
 		passenger_path="$passenger_root/ext/nginx"
 
 		
-		#bugfix for passenger 3.0.9, otherwise it won't compile
-		is_309=$(echo "$passenger_path" | grep "3\.0\.9")
-		if [ -n "$is_309" ] ; then
-			if [ -e "$passenger_path/ContentHandler.c" ] ; then
-				sed -i 's/^.*[* \t]main_conf[ \t;].*$//g' "$passenger_path/ContentHandler.c"
-			fi
-			if [ -e "$passenger_path/config" ] ; then
-				cat << 'EOF' >>$passenger_path/config
-
-ngx_feature="Math library"
-ngx_feature_name=
-ngx_feature_run=no
-ngx_feature_incs="#include <math.h>"
-ngx_feature_path=
-ngx_feature_libs="-lm"
-ngx_feature_test="pow(1, 2)"
-. auto/feature
-if [ $ngx_found = yes ]; then
-    CORE_LIBS="$CORE_LIBS -lm"
-fi
-
-EOF
-			fi
-			echo ""
-			echo "PATCHING BUGS IN PASSENGER 3.0.9"
-			echo ""
-		fi
-
-
-
 
 		./configure --prefix="$NGINX_PREFIX" --sbin-path="$NGINX_SBIN_PATH" --conf-path="$nginx_conf_file" --pid-path="$NGINX_PID_PATH" --error-log-path="$NGINX_ERROR_LOG_PATH" --http-log-path="$nginx_http_log_file" --user="$NGINX_USER" --group="$NGINX_GROUP" --with-http_ssl_module --with-debug --add-module="$passenger_path"
 	else
