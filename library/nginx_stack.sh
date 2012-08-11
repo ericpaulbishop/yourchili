@@ -381,7 +381,7 @@ function nginx_install
 	passenger_root=""
 	passenger_path=""
 	if  [ "$NGINX_USE_PASSENGER" = 1 ] ; then
-		passenger_root=`$RUBY_PREFIX/bin/passenger-config --root`
+		passenger_root=`$RUBY_PREFIX/passenger-config --root`
 		passenger_path="$passenger_root/ext/nginx"
 
 		
