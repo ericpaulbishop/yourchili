@@ -6,7 +6,7 @@
 
 REDMINE_GIT_REPO="git://github.com/edavis10/redmine.git"
 CHILI_PROJECT_GIT_REPO="git://github.com/chiliproject/chiliproject.git"
-REDMINE_VERSION="1.3.0"
+REDMINE_VERSION="2.0.3"
 CHILI_PROJECT_VERSION="v3.0.0beta1"
 
 
@@ -136,12 +136,22 @@ function install_chili_project_or_redmine
 
 
 	cd /tmp
+	aptitude install -y libmagick-dev
+	aptitude install -y libmagickwand-dev
+	aptitude install -y libxslt-dev
 	if [ "$IS_REDMINE" = "1" ] ; then
 		git clone "$REDMINE_GIT_REPO"
 		mv redmine "$chili_install_path"
 		cd "$chili_install_path"
 		git checkout "$REDMINE_VERSION"
 		rm -rf .git
+		if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
+			/usr/local/ruby/bin/bundle install --without="development test sqlite postgres mysql2"
+		else
+			/usr/local/ruby/bin/bundle install --without="development test sqlite mysql mysql2"
+		fi
+
+		/usr/local/ruby/bin/bundle install --without development test
 	else
 		#get chiliproject code
 		cd /tmp
@@ -151,10 +161,6 @@ function install_chili_project_or_redmine
 		git checkout "$CHILI_PROJECT_VERSION"
 		rm -rf .git
 
-		#the following is required for chiliproject >= 2.0.0
-		aptitude install -y libmagick-dev
-		aptitude install -y libmagickwand-dev
-		aptitude install -y libxslt-dev
 		if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
 			/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
 		else
@@ -193,7 +199,12 @@ EOF
 	if [ -e config/initializers/session_store.rb ] ; then
 		RAILS_ENV=production rake config/initializers/session_store.rb
 	else
-		rake generate_session_store
+		if [ "$IS_REDMINE" ] ; then
+			rake generate_secret_token
+		else
+
+			rake generate_session_store
+		fi
 	fi
 	RAILS_ENV=production rake db:migrate
 
@@ -283,30 +294,29 @@ EOF
 
 
 	
-	
 	#git hosting plugin
-	cd vendor/plugins
-	git clone git://github.com/ericpaulbishop/redmine_git_hosting.git
-	cd redmine_git_hosting
+	#cd vendor/plugins
+	#git clone git://github.com/ericpaulbishop/redmine_git_hosting.git
+	#cd redmine_git_hosting
 
 	#checkout proper redmine_git_hosting version
-	git checkout new_contributions
+	#git checkout new_contributions
 
-	rm -rf .git
-	escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
-	sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
-	sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/gitolite_admin_id_rsa',/"   "init.rb"
-	sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                               "init.rb"
-	cp -r /root/.ssh "$chili_install_path"
-	chown -R www-data:www-data "$chili_install_path"
-	chmod 600 "$chili_install_path/.ssh/"*rsa*
-	cd "$chili_install_path"
-	if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
-		/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
-	else
-		/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
-	fi
-	rake db:migrate_plugins RAILS_ENV=production
+	#rm -rf .git
+	#escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
+	#sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
+	#sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/gitolite_admin_id_rsa',/"   "init.rb"
+	#sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                               "init.rb"
+	#cp -r /root/.ssh "$chili_install_path"
+	#chown -R www-data:www-data "$chili_install_path"
+	#chmod 600 "$chili_install_path/.ssh/"*rsa*
+	#cd "$chili_install_path"
+	#if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
+	#	/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
+	#else
+	#	/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
+	#fi
+	#rake db:migrate_plugins RAILS_ENV=production
 
 
 	#single project plugin
@@ -323,15 +333,15 @@ EOF
 
 
 	#action_mailer_optional_tls plugin
-	script/plugin install git://github.com/collectiveidea/action_mailer_optional_tls.git
+	#script/plugin install git://github.com/collectiveidea/action_mailer_optional_tls.git
 
 
 
 	#themes
-	git clone git://github.com/ericpaulbishop/redmine_theme_pack.git
-	mkdir -p public/themes
-	mv redmine_theme_pack/* public/themes/
-	rm -rf redmine_theme_pack
+	#git clone git://github.com/ericpaulbishop/redmine_theme_pack.git
+	#mkdir -p public/themes
+	#mv redmine_theme_pack/* public/themes/
+	#rm -rf redmine_theme_pack
 
 
 	#update permissions on chili install dir
