@@ -297,7 +297,11 @@ EOF
 
 	
 	##git hosting plugin
-	cd vendor/plugins
+	if [ "$IS_REDMINE" = "1" ] ; then 
+		cd plugins
+	else
+		cd vendor/plugins
+	fi
 	git clone git://github.com/ericpaulbishop/redmine_git_hosting.git
 	cd redmine_git_hosting
 
