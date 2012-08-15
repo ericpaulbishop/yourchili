@@ -296,29 +296,29 @@ EOF
 
 
 	
-	#git hosting plugin
-	#cd vendor/plugins
-	#git clone git://github.com/ericpaulbishop/redmine_git_hosting.git
-	#cd redmine_git_hosting
+	##git hosting plugin
+	cd vendor/plugins
+	git clone git://github.com/ericpaulbishop/redmine_git_hosting.git
+	cd redmine_git_hosting
 
 	#checkout proper redmine_git_hosting version
-	#git checkout new_contributions
+	git checkout 2.0-migration
 
-	#rm -rf .git
-	#escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
-	#sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
-	#sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/gitolite_admin_id_rsa',/"   "init.rb"
-	#sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                               "init.rb"
-	#cp -r /root/.ssh "$chili_install_path"
-	#chown -R www-data:www-data "$chili_install_path"
-	#chmod 600 "$chili_install_path/.ssh/"*rsa*
-	#cd "$chili_install_path"
-	#if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
-	#	/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
-	#else
-	#	/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
-	#fi
-	#rake db:migrate_plugins RAILS_ENV=production
+	rm -rf .git
+	escaped_chili_install_path=$(echo "$chili_install_path" | sed 's/\//\\\//g')
+	sed -i -e  "s/'gitoliteUrl.*\$/'gitoliteUrl' => 'git@localhost:gitolite-admin.git',/"                                             "init.rb"
+	sed -i -e  "s/'gitoliteIdentityFile.*\$/'gitoliteIdentityFile' => '$escaped_chili_install_path\/.ssh\/gitolite_admin_id_rsa',/"   "init.rb"
+	sed -i -e  "s/'basePath.*\$/'basePath' => '\/srv\/projects\/git\/repositories\/',/"                                               "init.rb"
+	cp -r /root/.ssh "$chili_install_path"
+	chown -R www-data:www-data "$chili_install_path"
+	chmod 600 "$chili_install_path/.ssh/"*rsa*
+	cd "$chili_install_path"
+	if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
+		/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
+	else
+		/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
+	fi
+	rake db:migrate_plugins RAILS_ENV=production
 
 
 	#single project plugin
