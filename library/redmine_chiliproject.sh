@@ -314,9 +314,9 @@ EOF
 	chmod 600 "$chili_install_path/.ssh/"*rsa*
 	cd "$chili_install_path"
 	if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
-		/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
+		bundle install --without="sqlite postgres mysql2"
 	else
-		/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
+		bundle install --without="sqlite mysql mysql2"
 	fi
 	rake db:migrate_plugins RAILS_ENV=production
 
