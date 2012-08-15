@@ -287,8 +287,11 @@ end
 EOF
 
 
-
-	ruby script/console production < create.rb
+	if [ "$IS_REDMINE" = "1" ] ; then
+		ruby script/rails console production < create.rb
+	else
+		ruby script/console production < create.rb
+	fi
 	rm -rf create.rb
 
 
