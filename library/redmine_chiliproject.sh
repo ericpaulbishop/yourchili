@@ -146,12 +146,11 @@ function install_chili_project_or_redmine
 		git checkout "$REDMINE_VERSION"
 		rm -rf .git
 		if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
-			/usr/local/ruby/bin/bundle install --without="development test sqlite postgres mysql2"
+			bundle install --without="development test sqlite postgres mysql2"
 		else
-			/usr/local/ruby/bin/bundle install --without="development test sqlite mysql mysql2"
+			bundle install --without="development test sqlite mysql mysql2"
 		fi
 
-		/usr/local/ruby/bin/bundle install --without development test
 	else
 		#get chiliproject code
 		cd /tmp
@@ -162,9 +161,9 @@ function install_chili_project_or_redmine
 		rm -rf .git
 
 		if [ "$DB_TYPE" = "mysql" ]  && [ -n "$DB_PASSWORD"] ; then
-			/usr/local/ruby/bin/bundle install --without="sqlite postgres mysql2"
+			bundle install --without="sqlite postgres mysql2"
 		else
-			/usr/local/ruby/bin/bundle install --without="sqlite mysql mysql2"
+			bundle install --without="sqlite mysql mysql2"
 		fi
 	fi
 	
